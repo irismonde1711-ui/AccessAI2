@@ -1,0 +1,127 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f5f7fb;
+  --foreground: #00124a;
+
+  --color-navy-deeper: #00124a;
+  --color-navy-dark: #001f5c;
+  --color-navy: #00338d;
+  --color-teal: #00b09b;
+  --color-teal-light: #e6f7f5;
+  --color-muted-grey: #5a6478;
+  --color-panel-grey: #f5f7fb;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-navy-deeper: var(--color-navy-deeper);
+  --color-navy-dark: var(--color-navy-dark);
+  --color-navy: var(--color-navy);
+  --color-teal: var(--color-teal);
+  --color-teal-light: var(--color-teal-light);
+  --color-muted-grey: var(--color-muted-grey);
+  --color-panel-grey: var(--color-panel-grey);
+
+  --font-sans: var(--font-dm-sans);
+  --font-display: var(--font-sora);
+  --font-mono: var(--font-jetbrains-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.font-display {
+  font-family: var(--font-display), var(--font-sans);
+}
+
+.sidebar-gradient {
+  background: linear-gradient(160deg, #00124a 0%, #001835 60%, #00124a 100%);
+}
+
+.auth-card-input {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.auth-card-input::placeholder {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.markdown-content :first-child {
+  margin-top: 0;
+}
+.markdown-content :last-child {
+  margin-bottom: 0;
+}
+.markdown-content p {
+  margin: 0.6em 0;
+  line-height: 1.6;
+}
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3 {
+  font-family: var(--font-display), var(--font-sans);
+  font-weight: 600;
+  margin: 1em 0 0.4em;
+}
+.markdown-content h1 {
+  font-size: 1.25rem;
+}
+.markdown-content h2 {
+  font-size: 1.1rem;
+}
+.markdown-content h3 {
+  font-size: 1rem;
+}
+.markdown-content ul,
+.markdown-content ol {
+  margin: 0.6em 0;
+  padding-left: 1.4em;
+}
+.markdown-content ul {
+  list-style: disc;
+}
+.markdown-content ol {
+  list-style: decimal;
+}
+.markdown-content li {
+  margin: 0.3em 0;
+}
+.markdown-content code {
+  font-family: var(--font-mono);
+  background: rgba(0, 18, 74, 0.06);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+  font-size: 0.85em;
+}
+.markdown-content pre {
+  background: rgba(0, 18, 74, 0.06);
+  border-radius: 12px;
+  padding: 0.8em 1em;
+  overflow-x: auto;
+  margin: 0.6em 0;
+}
+.markdown-content pre code {
+  background: none;
+  padding: 0;
+}
+.markdown-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.6em 0;
+  font-size: 0.9em;
+}
+.markdown-content th,
+.markdown-content td {
+  border: 1px solid rgba(0, 18, 74, 0.12);
+  padding: 0.4em 0.6em;
+  text-align: left;
+}
+.markdown-content strong {
+  font-weight: 600;
+}
