@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Sora, DM_Sans, JetBrains_Mono } from "next/font/google";
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import "./globals.css";
 
 const sora = Sora({
@@ -29,7 +30,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${sora.variable} ${dmSans.variable} ${jetBrainsMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-panel-grey text-foreground font-sans">
-        {children}
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );

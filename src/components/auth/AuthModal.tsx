@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { isValidEmail, isValidPassword } from "@/lib/validation";
-import { Modal } from "@/components/ui/Modal";
+import { GatewayModal as Modal } from "@/components/ui/GatewayModal";
 import { LogoMark } from "@/components/ui/Logo";
 
 type Mode = "login" | "signup";

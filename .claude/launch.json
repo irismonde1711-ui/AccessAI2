@@ -4,7 +4,7 @@
     {
       "name": "design-preview",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["--yes", "serve", ".", "-l", "4173"],
+      "runtimeArgs": ["--yes", "serve", "C:\\Users\\abc\\Downloads", "-l", "4173"],
       "port": 4173
     },
     {

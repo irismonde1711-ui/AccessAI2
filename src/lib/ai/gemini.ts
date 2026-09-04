@@ -33,7 +33,7 @@ export async function* streamAssistantReply(
   // (observed ~50% failure rate), and Gemini itself occasionally returns
   // transient 429/503 "overloaded" errors. Retry both before giving up —
   // these are all pre-stream failures, never partial responses.
-  const MAX_ATTEMPTS = 6;
+  const MAX_ATTEMPTS = 4;
   const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504]);
   let res: Response | null = null;
   let lastError: unknown;
@@ -43,7 +43,7 @@ export async function* streamAssistantReply(
       const candidate = await fetch(`${GEMINI_URL}&key=${apiKey}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        signal: AbortSignal.any([signal, AbortSignal.timeout(8000)]),
+        signal: AbortSignal.any([signal, AbortSignal.timeout(6000)]),
         body: requestBody,
       });
 

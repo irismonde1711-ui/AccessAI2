@@ -15,8 +15,14 @@ export async function POST(request: NextRequest) {
   const {
     sessionId = null,
     isTemporary = false,
+    projectId = null,
     messages,
-  } = body as { sessionId: string | null; isTemporary: boolean; messages: ChatTurn[] };
+  } = body as {
+    sessionId: string | null;
+    isTemporary: boolean;
+    projectId?: string | null;
+    messages: ChatTurn[];
+  };
 
   if (!Array.isArray(messages) || messages.length === 0) {
     return Response.json({ error: "messages is required" }, { status: 400 });
@@ -64,6 +70,20 @@ export async function POST(request: NextRequest) {
         .select("id")
         .single();
       activeSessionId = session?.id ?? null;
+
+      if (activeSessionId && projectId) {
+        const { data: project } = await admin
+          .from("projects")
+          .select("id")
+          .eq("id", projectId)
+          .eq("user_id", user!.id)
+          .maybeSingle();
+        if (project) {
+          await admin
+            .from("project_sessions")
+            .insert({ project_id: projectId, session_id: activeSessionId });
+        }
+      }
     }
     if (activeSessionId) {
       await admin.from("chat_messages").insert({
@@ -126,6 +146,7 @@ export async function POST(request: NextRequest) {
     headers: {
       "Content-Type": "text/plain; charset=utf-8",
       "X-Session-Id": activeSessionId ?? "",
+      "X-Messages-Remaining": usage.remaining == null ? "" : String(usage.remaining),
     },
   });
 }

@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #f5f7fb;
   --foreground: #00124a;
@@ -30,6 +32,12 @@
   --font-mono: var(--font-jetbrains-mono);
 }
 
+.dark {
+  --background: #0a1230;
+  --foreground: #f5f7fb;
+  --color-panel-grey: #0a1230;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
@@ -49,6 +57,23 @@ body {
 }
 
 .auth-card-input::placeholder {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* Used by workspace modals (theme-aware), unlike .auth-card-input which is
+   only ever used on the always-dark auth gateway modals. */
+.modal-input {
+  background: rgba(0, 18, 74, 0.04);
+  border: 1px solid rgba(0, 18, 74, 0.12);
+}
+.modal-input::placeholder {
+  color: rgba(0, 18, 74, 0.4);
+}
+.dark .modal-input {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+.dark .modal-input::placeholder {
   color: rgba(255, 255, 255, 0.45);
 }
 
@@ -121,6 +146,14 @@ body {
   border: 1px solid rgba(0, 18, 74, 0.12);
   padding: 0.4em 0.6em;
   text-align: left;
+}
+.dark .markdown-content code,
+.dark .markdown-content pre {
+  background: rgba(255, 255, 255, 0.08);
+}
+.dark .markdown-content th,
+.dark .markdown-content td {
+  border-color: rgba(255, 255, 255, 0.12);
 }
 .markdown-content strong {
   font-weight: 600;

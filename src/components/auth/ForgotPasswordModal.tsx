@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { isValidEmail } from "@/lib/validation";
-import { Modal } from "@/components/ui/Modal";
+import { GatewayModal as Modal } from "@/components/ui/GatewayModal";
 
 export function ForgotPasswordModal({ onClose }: { onClose: () => void }) {
   const [email, setEmail] = useState("");
