@@ -23,6 +23,9 @@ export async function* streamAssistantReply(
   if (!apiKey) {
     throw new Error("GOOGLE_GEMINI_API_KEY is not set");
   }
+  console.log(
+    `[gemini] using key: len=${apiKey.length} prefix=${apiKey.slice(0, 6)} hasWhitespace=${/\s/.test(apiKey)}`,
+  );
 
   const requestBody = JSON.stringify({
     systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
@@ -47,6 +50,8 @@ export async function* streamAssistantReply(
         body: requestBody,
       });
 
+      console.log(`[gemini] attempt ${attempt}/${MAX_ATTEMPTS}: HTTP ${candidate.status}`);
+
       if (candidate.ok) {
         res = candidate;
         break;
@@ -58,6 +63,10 @@ export async function* streamAssistantReply(
       }
       lastError = new Error(`Gemini request failed: ${candidate.status}`);
     } catch (err) {
+      console.log(
+        `[gemini] attempt ${attempt}/${MAX_ATTEMPTS}: threw`,
+        err instanceof Error ? err.message : err,
+      );
       lastError = err;
       if (signal.aborted || attempt === MAX_ATTEMPTS) break;
     }
@@ -75,12 +84,17 @@ export async function* streamAssistantReply(
 
   if (!res.ok || !res.body) {
     const detail = await res.text().catch(() => "");
+    console.error(`[gemini] HTTP ${res.status} from Gemini:`, detail.slice(0, 2000));
     throw new Error(`Gemini request failed: ${res.status} ${detail}`);
   }
+
+  console.log(`[gemini] HTTP ${res.status} OK, streaming response…`);
 
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
+  let yieldedAny = false;
+  let lastParsed: unknown = null;
 
   while (true) {
     const { done, value } = await reader.read();
@@ -99,13 +113,28 @@ export async function* streamAssistantReply(
 
       try {
         const parsed = JSON.parse(jsonStr);
+        lastParsed = parsed;
         const text: string = (parsed?.candidates?.[0]?.content?.parts ?? [])
           .map((p: { text?: string }) => p.text ?? "")
           .join("");
-        if (text) yield text;
+        if (text) {
+          yieldedAny = true;
+          yield text;
+        }
       } catch {
         // Partial/malformed chunk — shouldn't happen with well-formed SSE framing.
       }
     }
+  }
+
+  if (!yieldedAny) {
+    // A clean 200 stream that produced zero text usually means Gemini
+    // blocked/filtered the response (safety, recitation, etc.) rather than
+    // an actual network/API failure — log the last chunk so the real
+    // reason (finishReason / promptFeedback) is visible in Vercel's logs.
+    console.error(
+      "[gemini] Stream completed with no text. Last parsed chunk:",
+      JSON.stringify(lastParsed).slice(0, 2000),
+    );
   }
 }
