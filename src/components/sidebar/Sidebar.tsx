@@ -236,20 +236,6 @@ export function Sidebar({
                 </button>
               ))}
             </div>
-
-            <div className="mx-4 mt-6 rounded-2xl border border-teal/30 bg-teal/10 p-4">
-              <p className="text-sm font-semibold text-white">Get responses tailored to you</p>
-              <p className="mt-1 text-xs text-white/60">
-                Log in to save chats, upload documents and keep your projects and drafts in one
-                place.
-              </p>
-              <button
-                onClick={onOpenLogin}
-                className="mt-3 w-full rounded-full bg-teal py-2 text-xs font-semibold text-white hover:brightness-110"
-              >
-                Log in
-              </button>
-            </div>
           </>
         ) : (
           <>
@@ -360,6 +346,22 @@ export function Sidebar({
         )}
 
         <div className="flex-1" />
+
+        {!isLoggedIn && (
+          <div className="mx-4 mb-2 rounded-2xl border border-teal/30 bg-teal/10 p-4">
+            <p className="text-sm font-semibold text-white">Get responses tailored to you</p>
+            <p className="mt-1 text-xs text-white/60">
+              Log in to save chats, upload documents and keep your projects and drafts in one
+              place.
+            </p>
+            <button
+              onClick={onOpenLogin}
+              className="mt-3 w-full rounded-full bg-teal py-2 text-xs font-semibold text-white hover:brightness-110"
+            >
+              Log in
+            </button>
+          </div>
+        )}
 
         {isLoggedIn && (
           <div className="relative mx-2 mt-1">

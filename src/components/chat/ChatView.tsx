@@ -63,6 +63,7 @@ export function ChatView({
   const [attachError, setAttachError] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [messagesRemaining, setMessagesRemaining] = useState<number | null>(null);
+  const [documentsUnlockAt, setDocumentsUnlockAt] = useState<string | null>(null);
   const sessionIdRef = useRef<string | null>(initialSessionId);
   const abortRef = useRef<AbortController | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -73,6 +74,16 @@ export function ChatView({
   useEffect(() => {
     sessionIdRef.current = initialSessionId;
   }, [initialSessionId]);
+
+  useEffect(() => {
+    fetch("/api/usage")
+      .then((r) => r.json())
+      .then((d) => {
+        setMessagesRemaining(d.messagesRemaining ?? null);
+        setDocumentsUnlockAt(d.documentsUnlockAt ?? null);
+      })
+      .catch(() => {});
+  }, []);
 
   async function handleSend(e: React.SyntheticEvent) {
     e.preventDefault();
@@ -213,6 +224,12 @@ export function ChatView({
 
   const isEmpty = messages.length === 0;
 
+  const composerPlaceholder = documentsUnlockAt
+    ? `Uploads paused until ${new Date(documentsUnlockAt).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })} — you can still type`
+    : isMobile
+      ? "Ask anything…"
+      : "Ask anything about compliance, drafting or your documents";
+
   const composer = (
     <form onSubmit={handleSend} className="mx-auto w-full max-w-2xl">
       {attachments.length > 0 && (
@@ -256,7 +273,7 @@ export function ChatView({
               handleSend(e);
             }
           }}
-          placeholder={isMobile ? "Ask anything…" : "Ask anything about compliance, drafting or your documents"}
+          placeholder={composerPlaceholder}
           className="max-h-32 flex-1 resize-none bg-transparent py-2 text-sm text-navy-deeper outline-none placeholder:text-muted-grey dark:text-white dark:placeholder:text-white/40"
         />
         {voice.supported && (
@@ -309,13 +326,28 @@ export function ChatView({
   if (isEmpty) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center overflow-hidden px-6 text-center">
+        <div
+          className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl shadow-lg"
+          style={{ background: "linear-gradient(150deg, #00338D, #00124A)" }}
+        >
+          <LogoMark size={30} iconOnly />
+        </div>
         <h1 className="font-display text-3xl font-semibold text-navy-deeper dark:text-white">
-          {fullName ? `Good to see you, ${fullName.split(" ")[0]}.` : "What's on your mind today?"}
+          {fullName ? `Good to see you, ${fullName.split(" ")[0]}.` : "Where should we begin?"}
         </h1>
-        {fullName && (
-          <p className="mt-2 text-muted-grey dark:text-white/50">
-            What would you like to work through today?
-          </p>
+        <p className="mt-2 text-muted-grey dark:text-white/50">
+          {fullName
+            ? "What would you like to work through today?"
+            : "Ask a compliance question, or see what this assistant can do."}
+        </p>
+        {!fullName && (
+          <button
+            type="button"
+            onClick={() => setInput("What can you do?")}
+            className="mt-4 rounded-full border border-black/10 bg-white px-4 py-2 text-sm text-navy-deeper hover:bg-black/5 dark:border-white/15 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
+          >
+            What can you do?
+          </button>
         )}
         <div className="mt-6 w-full">{composer}</div>
         {error && <p className="mx-auto mt-4 max-w-2xl text-sm text-red-500">{error}</p>}

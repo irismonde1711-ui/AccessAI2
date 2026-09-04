@@ -89,6 +89,9 @@ export function HomeShell({
     headerSubtitle = info?.projectName
       ? `Project: ${info.projectName} · saved automatically`
       : "Saved automatically";
+  } else if (!isLoggedIn) {
+    headerTitle = "New conversation";
+    headerSubtitle = "Guest session";
   } else {
     headerTitle = "New conversation";
     headerSubtitle = "Nothing sent yet";
@@ -189,12 +192,12 @@ export function HomeShell({
       />
 
       <div className="flex flex-1 flex-col overflow-hidden">
-        {isLoggedIn && (
-          <div className="flex items-center gap-3 border-b border-black/5 bg-white px-4 py-3 dark:border-white/10 dark:bg-navy-deeper sm:px-6">
+        <div className="flex items-center justify-between gap-3 border-b border-black/5 bg-white px-4 py-3 dark:border-white/10 dark:bg-navy-deeper sm:px-6">
+          <div className="flex min-w-0 items-center gap-3">
             <button
               onClick={() => (isMobile ? setMobileSidebarOpen(true) : setCollapsed((c) => !c))}
               aria-label="Toggle sidebar"
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-navy-deeper hover:bg-navy-deeper/5 dark:text-white dark:hover:bg-white/10"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-black/10 text-navy-deeper hover:bg-navy-deeper/5 dark:border-white/10 dark:text-white dark:hover:bg-white/10"
             >
               <MenuIcon size={16} />
             </button>
@@ -205,21 +208,7 @@ export function HomeShell({
               <p className="truncate text-xs text-muted-grey dark:text-white/50">{headerSubtitle}</p>
             </div>
           </div>
-        )}
-        {!isLoggedIn && (
-          <div className="flex items-center justify-between gap-2 border-b border-black/5 bg-white px-4 py-3 dark:border-white/10 dark:bg-navy-deeper sm:px-6">
-            <div className="flex min-w-0 items-center gap-3">
-              <button
-                onClick={() => setMobileSidebarOpen(true)}
-                aria-label="Open sidebar"
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-navy-deeper hover:bg-navy-deeper/5 dark:text-white dark:hover:bg-white/10 md:hidden"
-              >
-                <MenuIcon size={16} />
-              </button>
-              <p className="hidden truncate text-sm text-muted-grey dark:text-white/50 sm:block">
-                Guest session · not saved
-              </p>
-            </div>
+          {!isLoggedIn && (
             <div className="flex shrink-0 items-center gap-2 sm:gap-3">
               <button
                 onClick={() => setModal("login")}
@@ -234,8 +223,8 @@ export function HomeShell({
                 Sign up for free
               </button>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         <ChatView
           key={chatKey}
