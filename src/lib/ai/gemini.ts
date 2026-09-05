@@ -95,6 +95,7 @@ export async function* streamAssistantReply(
   let buffer = "";
   let yieldedAny = false;
   let lastParsed: unknown = null;
+  let fullText = "";
 
   while (true) {
     const { done, value } = await reader.read();
@@ -119,12 +120,17 @@ export async function* streamAssistantReply(
           .join("");
         if (text) {
           yieldedAny = true;
+          fullText += text;
           yield text;
         }
       } catch {
         // Partial/malformed chunk — shouldn't happen with well-formed SSE framing.
       }
     }
+  }
+
+  if (yieldedAny) {
+    console.log(`[gemini] full response (${fullText.length} chars):`, fullText.slice(0, 2000));
   }
 
   if (!yieldedAny) {

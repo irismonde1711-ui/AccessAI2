@@ -144,17 +144,28 @@ export function ChatView({
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let text = "";
+      let failureDetail: string | null = null;
+      const FAIL_MARKER = "[GEMFAIL] ";
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        text += decoder.decode(value, { stream: true });
+        const chunk = decoder.decode(value, { stream: true });
+        if (chunk.includes(FAIL_MARKER)) {
+          failureDetail = chunk.slice(chunk.indexOf(FAIL_MARKER) + FAIL_MARKER.length);
+          break;
+        }
+        text += chunk;
         setMessages((prev) =>
           prev.map((m) => (m.id === assistantId ? { ...m, text } : m)),
         );
       }
 
-      if (!text) {
+      if (failureDetail) {
+        console.error("[chat] upstream failure detail:", failureDetail);
+        setMessages((prev) => prev.filter((m) => m.id !== assistantId));
+        setError("The assistant couldn't respond. Please try again.");
+      } else if (!text) {
         setMessages((prev) => prev.filter((m) => m.id !== assistantId));
         setError("The assistant couldn't respond. Please try again.");
       }

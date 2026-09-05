@@ -123,6 +123,8 @@ export async function POST(request: NextRequest) {
       } catch (err) {
         console.error("chat stream error:", err);
         try {
+          const message = err instanceof Error ? err.message : String(err);
+          controller.enqueue(encoder.encode(` [GEMFAIL] ${message}`));
           controller.close();
         } catch {
           // already closed by cancel()
