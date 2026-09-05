@@ -136,11 +136,11 @@ export async function* streamAssistantReply(
   if (!yieldedAny) {
     // A clean 200 stream that produced zero text usually means Gemini
     // blocked/filtered the response (safety, recitation, etc.) rather than
-    // an actual network/API failure — log the last chunk so the real
-    // reason (finishReason / promptFeedback) is visible in Vercel's logs.
-    console.error(
-      "[gemini] Stream completed with no text. Last parsed chunk:",
-      JSON.stringify(lastParsed).slice(0, 2000),
-    );
+    // an actual network/API failure. Throw instead of silently ending so
+    // the caller surfaces the real reason (finishReason / promptFeedback)
+    // instead of a bare empty reply.
+    const detail = JSON.stringify(lastParsed).slice(0, 2000);
+    console.error("[gemini] Stream completed with no text. Last parsed chunk:", detail);
+    throw new Error(`Gemini returned no text. Last chunk: ${detail}`);
   }
 }
