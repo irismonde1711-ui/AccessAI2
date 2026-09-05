@@ -20,11 +20,24 @@ export async function* streamAssistantReply(
   signal: AbortSignal,
 ): AsyncGenerator<string> {
   const apiKey = process.env.GOOGLE_GEMINI_API_KEY;
+
+  // Every failure path folds this trail into the thrown message so the real
+  // cause reaches the browser console, not just the server logs.
+  const trail: string[] = [];
+  const note = (line: string) => {
+    trail.push(line);
+    console.log(`[gemini] ${line}`);
+  };
+  // Annotated so TypeScript treats it as never-returning and narrows after it.
+  const fail: (summary: string) => never = (summary) => {
+    throw new Error(`${summary} | diagnostics: ${trail.join(" ; ")}`);
+  };
+
   if (!apiKey) {
-    throw new Error("GOOGLE_GEMINI_API_KEY is not set");
+    fail("GOOGLE_GEMINI_API_KEY is not set on this environment");
   }
-  console.log(
-    `[gemini] using key: len=${apiKey.length} prefix=${apiKey.slice(0, 6)} hasWhitespace=${/\s/.test(apiKey)}`,
+  note(
+    `key len=${apiKey.length} prefix=${apiKey.slice(0, 6)} suffix=${apiKey.slice(-4)} whitespace=${/\s/.test(apiKey)}`,
   );
 
   const requestBody = JSON.stringify({
@@ -32,63 +45,62 @@ export async function* streamAssistantReply(
     contents: turns.map((t) => ({ role: t.role, parts: [{ text: t.text }] })),
   });
 
-  // This network path drops the initial TLS handshake intermittently
-  // (observed ~50% failure rate), and Gemini itself occasionally returns
-  // transient 429/503 "overloaded" errors. Retry both before giving up —
-  // these are all pre-stream failures, never partial responses.
+  // Gemini occasionally returns transient 429/503 "overloaded" errors, and the
+  // initial TLS handshake to this host drops intermittently on some networks.
+  // Both are pre-stream failures, so retrying is always safe here.
   const MAX_ATTEMPTS = 4;
   const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504]);
+  // Guards time-to-headers only. It must NOT stay armed while the body
+  // streams: a fetch signal in Node aborts the live response stream too, and
+  // this model can think for far longer than any sane connect timeout before
+  // emitting its first token.
+  const HEADERS_TIMEOUT_MS = 15_000;
   let res: Response | null = null;
-  let lastError: unknown;
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    const headersTimer = new AbortController();
+    const timeoutId = setTimeout(() => headersTimer.abort(), HEADERS_TIMEOUT_MS);
     try {
       const candidate = await fetch(`${GEMINI_URL}&key=${apiKey}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        signal: AbortSignal.any([signal, AbortSignal.timeout(6000)]),
+        signal: AbortSignal.any([signal, headersTimer.signal]),
         body: requestBody,
       });
+      clearTimeout(timeoutId);
 
-      console.log(`[gemini] attempt ${attempt}/${MAX_ATTEMPTS}: HTTP ${candidate.status}`);
+      note(`attempt ${attempt}/${MAX_ATTEMPTS} responded HTTP ${candidate.status}`);
 
-      if (candidate.ok) {
+      if (candidate.ok || !RETRYABLE_STATUS.has(candidate.status) || attempt === MAX_ATTEMPTS) {
         res = candidate;
         break;
       }
-
-      if (!RETRYABLE_STATUS.has(candidate.status) || attempt === MAX_ATTEMPTS) {
-        res = candidate;
-        break;
-      }
-      lastError = new Error(`Gemini request failed: ${candidate.status}`);
     } catch (err) {
-      console.log(
-        `[gemini] attempt ${attempt}/${MAX_ATTEMPTS}: threw`,
-        err instanceof Error ? err.message : err,
-      );
-      lastError = err;
-      if (signal.aborted || attempt === MAX_ATTEMPTS) break;
+      clearTimeout(timeoutId);
+      const reason = headersTimer.signal.aborted
+        ? `no response headers within ${HEADERS_TIMEOUT_MS}ms`
+        : err instanceof Error
+          ? `${err.name}: ${err.message}`
+          : String(err);
+      note(`attempt ${attempt}/${MAX_ATTEMPTS} threw (${reason})`);
+      if (signal.aborted || attempt === MAX_ATTEMPTS) {
+        fail("Could not reach Gemini");
+      }
     }
 
-    if (attempt < MAX_ATTEMPTS) {
-      await new Promise((resolve) => setTimeout(resolve, 300 * attempt));
-    }
+    await new Promise((resolve) => setTimeout(resolve, 300 * attempt));
   }
 
   if (!res) {
-    throw lastError instanceof Error
-      ? lastError
-      : new Error("Gemini request failed after retries");
+    fail("Could not reach Gemini");
   }
 
   if (!res.ok || !res.body) {
-    const detail = await res.text().catch(() => "");
-    console.error(`[gemini] HTTP ${res.status} from Gemini:`, detail.slice(0, 2000));
-    throw new Error(`Gemini request failed: ${res.status} ${detail}`);
+    const detail = await res.text().catch(() => "<unreadable body>");
+    fail(`Gemini rejected the request with HTTP ${res.status}: ${detail.slice(0, 1000)}`);
   }
 
-  console.log(`[gemini] HTTP ${res.status} OK, streaming response…`);
+  note("headers received, reading stream");
 
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
@@ -130,17 +142,16 @@ export async function* streamAssistantReply(
   }
 
   if (yieldedAny) {
-    console.log(`[gemini] full response (${fullText.length} chars):`, fullText.slice(0, 2000));
+    note(`streamed ${fullText.length} chars`);
+    return;
   }
 
-  if (!yieldedAny) {
-    // A clean 200 stream that produced zero text usually means Gemini
-    // blocked/filtered the response (safety, recitation, etc.) rather than
-    // an actual network/API failure. Throw instead of silently ending so
-    // the caller surfaces the real reason (finishReason / promptFeedback)
-    // instead of a bare empty reply.
-    const detail = JSON.stringify(lastParsed).slice(0, 2000);
-    console.error("[gemini] Stream completed with no text. Last parsed chunk:", detail);
-    throw new Error(`Gemini returned no text. Last chunk: ${detail}`);
-  }
+  // The caller stopped it — an empty reply is the expected outcome, not a fault.
+  if (signal.aborted) return;
+
+  // A 200 stream that produced zero text means Gemini accepted the request but
+  // returned nothing usable: a safety/recitation block, or an empty candidate
+  // list. The last chunk carries finishReason / promptFeedback explaining which.
+  note(`stream ended with no text, last chunk: ${JSON.stringify(lastParsed)?.slice(0, 1000)}`);
+  fail("Gemini returned an empty response");
 }

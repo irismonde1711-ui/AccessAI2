@@ -3,6 +3,10 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { streamAssistantReply, type ChatTurn } from "@/lib/ai/gemini";
 
+// Vercel defaults serverless functions to 10s; a thinking model streaming a
+// long compliance answer needs considerably more than that before it finishes.
+export const maxDuration = 60;
+
 function getClientIp(request: NextRequest): string {
   return (
     request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
