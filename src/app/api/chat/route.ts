@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { streamAssistantReply, type ChatTurn } from "@/lib/ai/gemini";
+import { streamAssistantReply, type ChatTurn, type ResponseLength } from "@/lib/ai/gemini";
 
 // Vercel defaults serverless functions to 10s; a thinking model streaming a
 // long compliance answer needs considerably more than that before it finishes.
@@ -33,12 +33,14 @@ export async function POST(request: NextRequest) {
     projectId = null,
     messages,
     attachments = [],
+    responseLength = "auto",
   } = body as {
     sessionId: string | null;
     isTemporary: boolean;
     projectId?: string | null;
     messages: ChatTurn[];
     attachments?: StoredAttachment[];
+    responseLength?: ResponseLength;
   };
 
   if (!Array.isArray(messages) || messages.length === 0) {
@@ -166,6 +168,7 @@ export async function POST(request: NextRequest) {
         for await (const chunk of streamAssistantReply(
           turns,
           upstreamController.signal,
+          responseLength,
         )) {
           assistantText += chunk;
           controller.enqueue(encoder.encode(chunk));

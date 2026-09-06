@@ -23,9 +23,20 @@ const LINE_BREAK = /\r\n|\n|\r/;
 export type ChatFile = { mimeType: string; data: string };
 export type ChatTurn = { role: "user" | "model"; text: string; files?: ChatFile[] };
 
+// Per-message steer on answer length, chosen from the composer.
+export type ResponseLength = "auto" | "brief" | "detailed";
+
+const LENGTH_INSTRUCTION: Record<Exclude<ResponseLength, "auto">, string> = {
+  brief:
+    "For this reply, be concise: a short paragraph or a few bullets at most. Lead with the answer and drop any preamble.",
+  detailed:
+    "For this reply, be thorough: cover the relevant rules and edge cases, and structure it with headings, numbered steps or a table where that aids scanning.",
+};
+
 export async function* streamAssistantReply(
   turns: ChatTurn[],
   signal: AbortSignal,
+  responseLength: ResponseLength = "auto",
 ): AsyncGenerator<string> {
   const apiKey = process.env.GOOGLE_GEMINI_API_KEY;
 
@@ -48,8 +59,13 @@ export async function* streamAssistantReply(
     `key len=${apiKey.length} prefix=${apiKey.slice(0, 6)} suffix=${apiKey.slice(-4)} whitespace=${/\s/.test(apiKey)}`,
   );
 
+  const systemText =
+    responseLength === "auto"
+      ? SYSTEM_PROMPT
+      : `${SYSTEM_PROMPT}\n\n${LENGTH_INSTRUCTION[responseLength]}`;
+
   const requestBody = JSON.stringify({
-    systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+    systemInstruction: { parts: [{ text: systemText }] },
     contents: turns.map((t) => ({
       role: t.role,
       parts: [

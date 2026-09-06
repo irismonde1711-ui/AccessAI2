@@ -6,7 +6,7 @@ import remarkGfm from "remark-gfm";
 import { LogoMark } from "@/components/ui/Logo";
 import { useVoiceInput } from "@/lib/useVoiceInput";
 import { useIsMobile } from "@/lib/useIsMobile";
-import { PlusIcon, MicIcon, SendIcon, PinIcon, CloseIcon } from "@/components/ui/Icons";
+import { PlusIcon, MicIcon, SendIcon, PinIcon, CloseIcon, MoreIcon } from "@/components/ui/Icons";
 import { createClient } from "@/lib/supabase/client";
 
 type MessageFile = { filename: string; mimeType: string };
@@ -32,6 +32,20 @@ const ALLOWED_TYPES = [
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 ];
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
+
+type ResponseLength = "auto" | "brief" | "detailed";
+
+const LENGTH_LABEL: Record<ResponseLength, string> = {
+  auto: "Auto",
+  brief: "Brief",
+  detailed: "Detailed",
+};
+
+const LENGTH_HINT: Record<ResponseLength, string> = {
+  auto: "Let the assistant decide",
+  brief: "Short and to the point",
+  detailed: "Thorough, with structure",
+};
 
 export function ChatView({
   fullName,
@@ -60,6 +74,8 @@ export function ChatView({
   projectId?: string | null;
   isLoggedIn?: boolean;
 }) {
+  // Guests get "G", matching the prototype.
+  const userInitial = fullName?.trim()?.[0]?.toUpperCase() ?? "G";
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [input, setInput] = useState(initialInput);
   const [streaming, setStreaming] = useState(false);
@@ -68,6 +84,8 @@ export function ChatView({
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [attachError, setAttachError] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [responseLength, setResponseLength] = useState<ResponseLength>("auto");
+  const [lengthMenuOpen, setLengthMenuOpen] = useState(false);
   const [messagesRemaining, setMessagesRemaining] = useState<number | null>(null);
   const [documentsUnlockAt, setDocumentsUnlockAt] = useState<string | null>(null);
   const sessionIdRef = useRef<string | null>(initialSessionId);
@@ -141,6 +159,7 @@ export function ChatView({
           isTemporary,
           projectId: sessionIdRef.current ? undefined : projectId,
           attachments: uploaded,
+          responseLength,
           messages: nextMessages.map((m) => ({
             role: m.role === "assistant" ? "model" : "user",
             text: m.text,
@@ -367,6 +386,55 @@ export function ChatView({
             <MicIcon size={17} />
           </button>
         )}
+        <div className="relative shrink-0">
+          <button
+            type="button"
+            onClick={() => setLengthMenuOpen((o) => !o)}
+            aria-label="Response length"
+            title={`Response length: ${LENGTH_LABEL[responseLength]}`}
+            className={`flex h-9 items-center justify-center gap-1 rounded-full px-2.5 text-xs ${
+              responseLength === "auto"
+                ? "text-muted-grey hover:bg-black/5 dark:text-white/50 dark:hover:bg-white/10"
+                : "bg-teal/15 text-teal"
+            }`}
+          >
+            <MoreIcon size={17} />
+            {responseLength !== "auto" && <span>{LENGTH_LABEL[responseLength]}</span>}
+          </button>
+          {lengthMenuOpen && (
+            <>
+              <button
+                type="button"
+                aria-label="Close"
+                className="fixed inset-0 z-10 cursor-default"
+                onClick={() => setLengthMenuOpen(false)}
+              />
+              <div className="absolute bottom-full right-0 z-20 mb-2 w-56 overflow-hidden rounded-2xl border border-black/10 bg-white py-1 shadow-lg dark:border-white/10 dark:bg-navy-dark">
+                <p className="px-3 py-1.5 text-[11px] uppercase tracking-wide text-muted-grey dark:text-white/40">
+                  Response length
+                </p>
+                {(["auto", "brief", "detailed"] as const).map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => {
+                      setResponseLength(value);
+                      setLengthMenuOpen(false);
+                    }}
+                    className={`flex w-full flex-col items-start px-3 py-2 text-left hover:bg-panel-grey dark:hover:bg-white/5 ${
+                      responseLength === value ? "text-teal" : "text-navy-deeper dark:text-white"
+                    }`}
+                  >
+                    <span className="text-sm">{LENGTH_LABEL[value]}</span>
+                    <span className="text-xs text-muted-grey dark:text-white/40">
+                      {LENGTH_HINT[value]}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
         {streaming ? (
           <button
             type="button"
@@ -441,19 +509,30 @@ export function ChatView({
               return (
                 <div
                   key={m.id}
-                  className={
-                    m.role === "user"
-                      ? "ml-auto max-w-lg rounded-3xl rounded-br-lg bg-teal px-5 py-3 text-white"
-                      : "flex max-w-2xl gap-3"
-                  }
+                  className={`flex items-start gap-[13px] ${
+                    m.role === "user" ? "justify-end" : "max-w-2xl"
+                  }`}
                 >
-                  {m.role === "assistant" && <LogoMark size={28} />}
-                  <div className="min-w-0 flex-1">
+                  {m.role === "assistant" && (
+                    <div
+                      className="mt-0.5 flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full"
+                      style={{ background: "linear-gradient(150deg, #00338D, #00124A)" }}
+                    >
+                      <LogoMark size={17} iconOnly />
+                    </div>
+                  )}
+                  <div
+                    className={
+                      m.role === "user"
+                        ? "flex max-w-[82%] flex-col items-end"
+                        : "min-w-0 flex-1"
+                    }
+                  >
                     <div
                       className={
                         m.role === "assistant"
                           ? "markdown-content max-w-none rounded-3xl rounded-bl-lg border border-black/5 bg-white px-5 py-3 text-navy-deeper dark:border-white/10 dark:bg-navy-dark dark:text-white"
-                          : ""
+                          : "rounded-3xl rounded-br-lg bg-teal px-5 py-3 text-white"
                       }
                     >
                       {m.role === "assistant" && m.text === "" && streaming ? (
@@ -510,6 +589,11 @@ export function ChatView({
                       </div>
                     )}
                   </div>
+                  {m.role === "user" && (
+                    <div className="mt-0.5 flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full border border-black/10 bg-panel-grey font-display text-xs font-semibold text-navy-deeper dark:border-white/10 dark:bg-white/5 dark:text-white">
+                      {userInitial}
+                    </div>
+                  )}
                 </div>
               );
             })}
