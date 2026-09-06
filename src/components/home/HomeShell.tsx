@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { ForgotPasswordModal } from "@/components/auth/ForgotPasswordModal";
@@ -13,6 +13,7 @@ import { LogoutConfirmModal } from "@/components/modals/LogoutConfirmModal";
 import { NewProjectModal } from "@/components/modals/NewProjectModal";
 import { SearchConversationsModal } from "@/components/modals/SearchConversationsModal";
 import { EmailComposerModal } from "@/components/modals/EmailComposerModal";
+import { SubscribePromptModal } from "@/components/modals/SubscribePromptModal";
 import { MenuIcon } from "@/components/ui/Icons";
 import { useIsMobile } from "@/lib/useIsMobile";
 import type { SidebarData } from "@/lib/data/sidebar";
@@ -26,6 +27,7 @@ type ModalState =
   | "newProject"
   | "search"
   | "email"
+  | "subscribe"
   | null;
 
 type Message = {
@@ -81,6 +83,7 @@ export function HomeShell({
   const [emailRecipient, setEmailRecipient] = useState("");
   const [pendingProjectId, setPendingProjectId] = useState<string | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const isMobile = useIsMobile();
   const isLoggedIn = Boolean(email);
 
@@ -110,8 +113,8 @@ export function HomeShell({
     router.refresh();
   }
 
-  function handleAuthSuccess() {
-    setModal(null);
+  function handleAuthSuccess(justSignedUp: boolean) {
+    setModal(justSignedUp ? "subscribe" : null);
     router.refresh();
   }
 
@@ -325,6 +328,17 @@ export function HomeShell({
           data={sidebarData}
           onClose={() => setModal(null)}
           onSelectSession={handleSelectSession}
+        />
+      )}
+      {/* `welcome` is set by the auth callback on a confirmed account's first
+          sign-in, so the prompt is derived from the URL rather than copied
+          into state. */}
+      {(modal === "subscribe" || searchParams.get("welcome") === "1") && (
+        <SubscribePromptModal
+          onClose={() => {
+            setModal(null);
+            if (searchParams.get("welcome") === "1") router.replace("/");
+          }}
         />
       )}
       {modal === "email" && (

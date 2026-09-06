@@ -8,9 +8,19 @@ export async function GET(request: Request) {
 
   if (code) {
     const supabase = await createClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      return NextResponse.redirect(`${origin}${next}`);
+      // Signups need email confirmation, so this callback — not the signup
+      // form — is where a new account first has a session. Flag it so the
+      // workspace can show the post-signup subscribe prompt (spec §8.9).
+      const createdAt = data.user?.created_at;
+      const lastSignInAt = data.user?.last_sign_in_at;
+      const isFirstSignIn =
+        Boolean(createdAt) &&
+        (!lastSignInAt ||
+          Math.abs(new Date(lastSignInAt).getTime() - new Date(createdAt!).getTime()) < 60_000);
+      const destination = isFirstSignIn ? `${next}${next.includes("?") ? "&" : "?"}welcome=1` : next;
+      return NextResponse.redirect(`${origin}${destination}`);
     }
   }
 

@@ -17,7 +17,7 @@ export function AuthModal({
   initialMode?: Mode;
   onClose: () => void;
   onForgotPassword: () => void;
-  onSuccess: () => void;
+  onSuccess: (justSignedUp: boolean) => void;
 }) {
   const [mode, setMode] = useState<Mode>(initialMode);
   const [fullName, setFullName] = useState("");
@@ -71,7 +71,7 @@ export function AuthModal({
         return;
       }
       if (data.session) {
-        onSuccess();
+        onSuccess(true);
       } else {
         setCheckEmail(true);
       }
@@ -87,7 +87,7 @@ export function AuthModal({
       setError("Incorrect email or password.");
       return;
     }
-    onSuccess();
+    onSuccess(false);
   }
 
   if (checkEmail) {
