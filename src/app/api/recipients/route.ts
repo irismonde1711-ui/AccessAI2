@@ -9,10 +9,12 @@ export async function GET() {
 
   const { data } = await supabase
     .from("saved_recipients")
-    .select("email")
+    .select("email, use_count")
     .eq("user_id", user.id)
     .order("last_used", { ascending: false })
     .limit(10);
 
-  return Response.json({ recipients: (data ?? []).map((r) => r.email) });
+  return Response.json({
+    recipients: (data ?? []).map((r) => ({ email: r.email, useCount: r.use_count ?? 1 })),
+  });
 }

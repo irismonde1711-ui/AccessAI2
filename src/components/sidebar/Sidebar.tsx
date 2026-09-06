@@ -44,6 +44,7 @@ export function Sidebar({
   onOpenLogin,
   onTogglePin,
   onExamplePrompt,
+  onOpenDraft,
   mobileOpen,
   onCloseMobile,
 }: {
@@ -66,6 +67,7 @@ export function Sidebar({
   onOpenLogin: () => void;
   onTogglePin: (id: string, pinned: boolean) => void;
   onExamplePrompt: (prompt: string) => void;
+  onOpenDraft?: (id: string) => void;
   mobileOpen: boolean;
   onCloseMobile: () => void;
 }) {
@@ -310,16 +312,32 @@ export function Sidebar({
 
             {data.drafts.length > 0 && (
               <>
-                <SectionLabel>Drafts</SectionLabel>
+                <div className="flex items-center justify-between px-2 pb-1.5 pt-4">
+                  <span className="text-[10.5px] font-medium uppercase tracking-[0.13em] text-white/40">
+                    Drafts
+                  </span>
+                  <span className="rounded-full bg-white/[0.07] px-[7px] py-0.5 text-[10.5px] text-white/30">
+                    {data.drafts.length}
+                  </span>
+                </div>
                 <div className="px-2">
                   {data.drafts.map((d) => (
-                    <div
+                    <button
                       key={d.id}
-                      className="flex items-center gap-2 truncate rounded-lg px-2 py-1.5 text-sm text-white/70"
+                      onClick={() => onOpenDraft?.(d.id)}
+                      className="flex w-full items-center gap-[9px] truncate rounded-[10px] px-2.5 py-2 text-left text-[12.5px] text-white/70 transition hover:bg-white/[0.06] hover:text-white"
                     >
-                      <span>{d.type === "email" ? "✉" : "◆"}</span>
+                      <span
+                        className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-md text-[10px] ${
+                          d.type === "email"
+                            ? "bg-teal/15 text-[#7fe0d2]"
+                            : "bg-white/[0.08] text-white/60"
+                        }`}
+                      >
+                        {d.type === "email" ? "✉" : "◆"}
+                      </span>
                       <span className="truncate">{d.title}</span>
-                    </div>
+                    </button>
                   ))}
                 </div>
               </>

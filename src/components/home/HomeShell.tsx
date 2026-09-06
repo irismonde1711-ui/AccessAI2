@@ -73,6 +73,7 @@ export function HomeShell({
   const [chatKey, setChatKey] = useState(0);
   const [prefill, setPrefill] = useState("");
   const [emailBody, setEmailBody] = useState("");
+  const [emailRecipient, setEmailRecipient] = useState("");
   const [pendingProjectId, setPendingProjectId] = useState<string | null>(null);
   const router = useRouter();
   const isMobile = useIsMobile();
@@ -137,6 +138,16 @@ export function HomeShell({
     setModal(null);
   }
 
+  async function handleOpenDraft(id: string) {
+    const res = await fetch(`/api/drafts?id=${encodeURIComponent(id)}`);
+    if (!res.ok) return;
+    const { draft } = await res.json();
+    setEmailBody(draft.content ?? "");
+    setEmailRecipient(draft.to_email ?? "");
+    setModal("email");
+    if (isMobile) setMobileSidebarOpen(false);
+  }
+
   async function handleTogglePin(id: string, pinned: boolean) {
     await fetch(`/api/sessions/${id}/pin`, {
       method: "POST",
@@ -187,6 +198,7 @@ export function HomeShell({
         onOpenLogin={() => setModal("login")}
         onTogglePin={handleTogglePin}
         onExamplePrompt={handleExamplePrompt}
+        onOpenDraft={handleOpenDraft}
         mobileOpen={mobileSidebarOpen}
         onCloseMobile={() => setMobileSidebarOpen(false)}
       />
@@ -239,7 +251,10 @@ export function HomeShell({
           onEmailResponse={
             isLoggedIn
               ? (body) => {
-                  setEmailBody(body);
+                  setEmailBody(
+                    `Dear colleague,\n\nPlease find below the summary prepared for the board.\n\n${body}\n\nKind regards,`,
+                  );
+                  setEmailRecipient("");
                   setModal("email");
                 }
               : undefined
@@ -296,7 +311,15 @@ export function HomeShell({
         />
       )}
       {modal === "email" && (
-        <EmailComposerModal initialBody={emailBody} onClose={() => setModal(null)} />
+        <EmailComposerModal
+          initialBody={emailBody}
+          initialRecipient={emailRecipient}
+          onClose={() => {
+            setModal(null);
+            setEmailRecipient("");
+            router.refresh();
+          }}
+        />
       )}
       {limitUnlockAt && (
         <UsageLimitModal
