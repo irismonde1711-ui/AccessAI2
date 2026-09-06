@@ -13,6 +13,11 @@ export const SYSTEM_PROMPT = `You are AccessAI2, a professional business assista
 
 Stay scoped to these professional/compliance domains — you are not a general-purpose chatbot. Be precise, cite the specific rule, section, or standard you're referencing where relevant, and format responses with clear markdown (headings, numbered steps, tables) so they're easy to scan in a business context.`;
 
+// Gemini terminates SSE events with CRLF pairs. Matching only "\n\n" silently
+// swallows the entire stream, since "\r\n\r\n" does not contain that substring.
+const EVENT_SEPARATOR = /\r\n\r\n|\n\n|\r\r/;
+const LINE_BREAK = /\r\n|\n|\r/;
+
 export type ChatTurn = { role: "user" | "model"; text: string };
 
 export async function* streamAssistantReply(
@@ -114,12 +119,12 @@ export async function* streamAssistantReply(
     if (done) break;
     buffer += decoder.decode(value, { stream: true });
 
-    let sepIndex: number;
-    while ((sepIndex = buffer.indexOf("\n\n")) !== -1) {
-      const rawEvent = buffer.slice(0, sepIndex);
-      buffer = buffer.slice(sepIndex + 2);
+    let separator: RegExpExecArray | null;
+    while ((separator = EVENT_SEPARATOR.exec(buffer)) !== null) {
+      const rawEvent = buffer.slice(0, separator.index);
+      buffer = buffer.slice(separator.index + separator[0].length);
 
-      const dataLine = rawEvent.split("\n").find((l) => l.startsWith("data:"));
+      const dataLine = rawEvent.split(LINE_BREAK).find((l) => l.startsWith("data:"));
       if (!dataLine) continue;
       const jsonStr = dataLine.slice(5).trim();
       if (!jsonStr) continue;
