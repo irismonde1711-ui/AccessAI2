@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Sora, DM_Sans, JetBrains_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import { ServiceWorkerRegistrar } from "@/components/pwa/ServiceWorkerRegistrar";
 import "./globals.css";
 
 const sora = Sora({
@@ -31,6 +32,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col bg-panel-grey text-foreground font-sans">
         <ThemeProvider>{children}</ThemeProvider>
+        <ServiceWorkerRegistrar />
       </body>
     </html>
   );
