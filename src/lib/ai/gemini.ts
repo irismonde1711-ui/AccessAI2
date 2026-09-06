@@ -66,8 +66,16 @@ export async function* streamAssistantReply(
       ? SYSTEM_PROMPT
       : `${SYSTEM_PROMPT}\n\n${LENGTH_INSTRUCTION[responseLength]}`;
 
+  // Thinking tokens bill as output and dominate the cost of short answers: an
+  // identical trivial prompt measured 64 tokens by default against 4 at
+  // "minimal". A brief answer does not need deliberation, so skip it there and
+  // leave the model's own judgement in place for everything else.
+  const generationConfig =
+    responseLength === "brief" ? { thinkingConfig: { thinkingLevel: "minimal" } } : undefined;
+
   const requestBody = JSON.stringify({
     systemInstruction: { parts: [{ text: systemText }] },
+    ...(generationConfig ? { generationConfig } : {}),
     contents: turns.map((t) => ({
       role: t.role,
       parts: [
