@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { streamAssistantReply, type ChatTurn, type ResponseLength } from "@/lib/ai/gemini";
+import { hasActiveSubscription } from "@/lib/data/subscription";
 
 // Vercel defaults serverless functions to 10s; a thinking model streaming a
 // long compliance answer needs considerably more than that before it finishes.
@@ -105,6 +106,7 @@ export async function POST(request: NextRequest) {
   );
   const files = modelFiles.filter((f): f is NonNullable<typeof f> => f !== null);
 
+  const isPaidUser = await hasActiveSubscription(admin, user?.id ?? null);
   const shouldPersist = Boolean(user) && !isTemporary;
   let activeSessionId: string | null = sessionId;
   const lastUserMessage = messages[messages.length - 1];
@@ -165,10 +167,14 @@ export async function POST(request: NextRequest) {
         const turns = files.length
           ? messages.map((m, i) => (i === messages.length - 1 ? { ...m, files } : m))
           : messages;
+        // The composer hides "detailed" from free accounts, but the request
+        // body is client-supplied, so the entitlement is decided here.
+        const effectiveLength: ResponseLength =
+          responseLength === "detailed" && !isPaidUser ? "auto" : responseLength;
         for await (const chunk of streamAssistantReply(
           turns,
           upstreamController.signal,
-          responseLength,
+          effectiveLength,
         )) {
           assistantText += chunk;
           controller.enqueue(encoder.encode(chunk));

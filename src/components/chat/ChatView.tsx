@@ -60,6 +60,7 @@ export function ChatView({
   initialInput = "",
   projectId = null,
   isLoggedIn = false,
+  isPaid = false,
 }: {
   fullName: string | null;
   initialMessages?: Message[];
@@ -73,6 +74,7 @@ export function ChatView({
   initialInput?: string;
   projectId?: string | null;
   isLoggedIn?: boolean;
+  isPaid?: boolean;
 }) {
   // Guests get "G", matching the prototype.
   const userInitial = fullName?.trim()?.[0]?.toUpperCase() ?? "G";
@@ -413,24 +415,42 @@ export function ChatView({
                 <p className="px-3 py-1.5 text-[11px] uppercase tracking-wide text-muted-grey dark:text-white/40">
                   Response length
                 </p>
-                {(["auto", "brief", "detailed"] as const).map((value) => (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => {
-                      setResponseLength(value);
-                      setLengthMenuOpen(false);
-                    }}
-                    className={`flex w-full flex-col items-start px-3 py-2 text-left hover:bg-panel-grey dark:hover:bg-white/5 ${
-                      responseLength === value ? "text-teal" : "text-navy-deeper dark:text-white"
-                    }`}
-                  >
-                    <span className="text-sm">{LENGTH_LABEL[value]}</span>
-                    <span className="text-xs text-muted-grey dark:text-white/40">
-                      {LENGTH_HINT[value]}
-                    </span>
-                  </button>
-                ))}
+                {(["auto", "brief", "detailed"] as const).map((value) => {
+                  // Detailed spends the most on output tokens, so it is a paid
+                  // benefit rather than something guests can run up a bill with.
+                  const locked = value === "detailed" && !isPaid;
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      disabled={locked}
+                      onClick={() => {
+                        if (locked) return;
+                        setResponseLength(value);
+                        setLengthMenuOpen(false);
+                      }}
+                      className={`flex w-full flex-col items-start px-3 py-2 text-left ${
+                        locked
+                          ? "cursor-not-allowed opacity-50"
+                          : "hover:bg-panel-grey dark:hover:bg-white/5"
+                      } ${
+                        responseLength === value ? "text-teal" : "text-navy-deeper dark:text-white"
+                      }`}
+                    >
+                      <span className="flex items-center gap-1.5 text-sm">
+                        {LENGTH_LABEL[value]}
+                        {locked && (
+                          <span className="rounded-full bg-teal/15 px-1.5 py-0.5 text-[10px] font-medium text-teal">
+                            Pro
+                          </span>
+                        )}
+                      </span>
+                      <span className="text-xs text-muted-grey dark:text-white/40">
+                        {locked ? "Upgrade to unlock longer answers" : LENGTH_HINT[value]}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </>
           )}

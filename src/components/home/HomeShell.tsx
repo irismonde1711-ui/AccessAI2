@@ -63,10 +63,12 @@ export function HomeShell({
   fullName,
   email,
   sidebarData,
+  isPaid = false,
 }: {
   fullName: string | null;
   email: string | null;
   sidebarData: SidebarData;
+  isPaid?: boolean;
 }) {
   const [modal, setModal] = useState<ModalState>(null);
   const [limitUnlockAt, setLimitUnlockAt] = useState<string | null>(null);
@@ -218,6 +220,7 @@ export function HomeShell({
         onTogglePin={handleTogglePin}
         onExamplePrompt={handleExamplePrompt}
         onOpenDraft={handleOpenDraft}
+        isPaid={isPaid}
         mobileOpen={mobileSidebarOpen}
         onCloseMobile={() => setMobileSidebarOpen(false)}
       />
@@ -266,6 +269,7 @@ export function HomeShell({
           isTemporary={temporaryChat}
           projectId={pendingProjectId}
           isLoggedIn={isLoggedIn}
+          isPaid={isPaid}
           onLimitReached={setLimitUnlockAt}
           onSessionCreated={handleSessionCreated}
           onEmailResponse={

@@ -45,6 +45,7 @@ export function Sidebar({
   onTogglePin,
   onExamplePrompt,
   onOpenDraft,
+  isPaid = false,
   mobileOpen,
   onCloseMobile,
 }: {
@@ -68,6 +69,7 @@ export function Sidebar({
   onTogglePin: (id: string, pinned: boolean) => void;
   onExamplePrompt: (prompt: string) => void;
   onOpenDraft?: (id: string) => void;
+  isPaid?: boolean;
   mobileOpen: boolean;
   onCloseMobile: () => void;
 }) {
@@ -402,18 +404,22 @@ export function Sidebar({
               </span>
               <span className="min-w-0 flex-1 text-left">
                 <span className="block truncate text-sm text-white">{displayName}</span>
-                <span className="block text-xs text-white/40">Free plan</span>
+                <span className="block text-xs text-white/40">
+                  {isPaid ? "Pro plan" : "Free plan"}
+                </span>
               </span>
-              <span
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setProfileMenuOpen(false);
-                  onOpenBilling();
-                }}
-                className="shrink-0 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white hover:bg-white/20"
-              >
-                Upgrade
-              </span>
+              {!isPaid && (
+                <span
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setProfileMenuOpen(false);
+                    onOpenBilling();
+                  }}
+                  className="shrink-0 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white hover:bg-white/20"
+                >
+                  Upgrade
+                </span>
+              )}
             </button>
           </div>
         )}
