@@ -6,7 +6,9 @@
 // implementation to call OpenRouter later shouldn't require touching any
 // call site.
 
-const GEMINI_MODEL = "gemini-2.5-flash";
+// 2.5-flash is closed to new projects: a freshly created key gets a 404 telling
+// it to move here. Verified against both the current key and a new one.
+const GEMINI_MODEL = "gemini-3.6-flash";
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:streamGenerateContent?alt=sse`;
 
 export const SYSTEM_PROMPT = `You are AccessAI2, a professional business assistant for governance, HR, finance, tax, and ESG topics. You help with HR communications, financial statement review, ATO lodgement summaries, SMSF audit checklists, ESG frameworks, and GRC guidance.
