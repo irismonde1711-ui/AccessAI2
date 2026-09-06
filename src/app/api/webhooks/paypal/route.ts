@@ -1,19 +1,31 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { verifyWebhookSignature } from "@/lib/paypal/verify";
 
 // Grants/renews access when a PayPal payment completes (spec §7.2).
 //
-// SECURITY NOTE: this does not yet verify PayPal's webhook signature —
-// that requires calling PayPal's /v1/notifications/verify-webhook-signature
-// endpoint, which needs a REST client secret (not the public JS SDK
-// client-id wired up so far) plus PAYPAL_WEBHOOK_ID. Until that's added,
-// anyone who discovers this URL could POST a fabricated
-// PAYMENT.CAPTURE.COMPLETED event naming any email and grant that account
-// a free subscription. Add signature verification before relying on this
-// in production.
+// Every event is checked against PayPal's verification endpoint first. This
+// fails closed: an unverified event grants nothing, because the alternative is
+// letting anyone who finds this URL name an email address and award themselves
+// a paid plan. A rejected event still returns 200 so PayPal stops retrying.
 const SUBSCRIPTION_DAYS = 30;
 
 export async function POST(request: Request) {
-  const body = await request.json().catch(() => null);
+  // Read once as text: verification needs the body exactly as delivered.
+  const rawBody = await request.text();
+
+  const verification = await verifyWebhookSignature(request.headers, rawBody);
+  if (!verification.verified) {
+    console.error(`[paypal] rejected webhook (${verification.reason})`);
+    return Response.json({ ok: true, verified: false }, { status: 202 });
+  }
+
+  const body = (() => {
+    try {
+      return JSON.parse(rawBody);
+    } catch {
+      return null;
+    }
+  })();
 
   if (!body || body.event_type !== "PAYMENT.CAPTURE.COMPLETED") {
     return Response.json({ ok: true });
