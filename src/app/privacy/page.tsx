@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { LegalPage, Section, Bullets, Pending } from "@/components/legal/LegalPage";
+import { LegalPage, Section, Bullets } from "@/components/legal/LegalPage";
 
 export const metadata: Metadata = {
   title: "Privacy Policy — AccessAI2",
@@ -10,10 +10,9 @@ export default function PrivacyPage() {
   return (
     <LegalPage title="Privacy Policy" updated="6 September 2026">
       <p>
-        AccessAI2 is operated by IRIS-Monde (<Pending>registered entity name</Pending>,{" "}
-        ABN <Pending>ABN</Pending>) (&quot;we&quot;, &quot;us&quot;). This policy explains what
-        personal information we collect when you use AccessAI2, how we handle it, and the choices
-        you have. We handle personal information in accordance with the{" "}
+        AccessAI2 is operated by IRIS-Monde (&quot;we&quot;, &quot;us&quot;). This policy explains
+        what personal information we collect when you use AccessAI2, how we handle it, and the
+        choices you have. We handle personal information in accordance with the{" "}
         <em>Privacy Act 1988</em> (Cth) and the Australian Privacy Principles (APPs).
       </p>
 
@@ -137,7 +136,7 @@ export default function PrivacyPage() {
         <p>
           You may request access to the personal information we hold about you, ask us to correct
           it, or ask us to delete your account and associated data. Contact us at{" "}
-          <Pending>privacy contact email</Pending> and we will respond within a reasonable period.
+          <a href="mailto:irismonde1711@gmail.com" className="text-teal underline">irismonde1711@gmail.com</a> and we will respond within a reasonable period.
           If we refuse a request, we will tell you why.
         </p>
       </Section>
@@ -153,7 +152,7 @@ export default function PrivacyPage() {
       <Section heading="9. Complaints">
         <p>
           If you believe we have mishandled your personal information, contact us first at{" "}
-          <Pending>privacy contact email</Pending> so we can investigate. If you are not satisfied
+          <a href="mailto:irismonde1711@gmail.com" className="text-teal underline">irismonde1711@gmail.com</a> so we can investigate. If you are not satisfied
           with our response, you may complain to the Office of the Australian Information
           Commissioner (OAIC) at oaic.gov.au or on 1300 363 992.
         </p>
@@ -170,11 +169,11 @@ export default function PrivacyPage() {
         <p>
           IRIS-Monde
           <br />
-          <Pending>registered entity name</Pending>
+          Australia
           <br />
-          <Pending>business address, state, postcode</Pending>
-          <br />
-          <Pending>privacy contact email</Pending>
+          <a href="mailto:irismonde1711@gmail.com" className="text-teal underline">
+            irismonde1711@gmail.com
+          </a>
         </p>
       </Section>
     </LegalPage>

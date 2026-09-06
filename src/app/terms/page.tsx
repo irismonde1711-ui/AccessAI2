@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { LegalPage, Section, Bullets, Pending } from "@/components/legal/LegalPage";
+import { LegalPage, Section, Bullets } from "@/components/legal/LegalPage";
 
 export const metadata: Metadata = {
   title: "Terms of Service — AccessAI2",
@@ -10,10 +10,8 @@ export default function TermsPage() {
   return (
     <LegalPage title="Terms of Service" updated="6 September 2026">
       <p>
-        These terms govern your use of AccessAI2, operated by IRIS-Monde (
-        <Pending>registered entity name</Pending>, ABN <Pending>ABN</Pending>). By creating an
-        account or using the service, you agree to them. If you do not agree, do not use the
-        service.
+        These terms govern your use of AccessAI2, operated by IRIS-Monde. By creating an account or using the
+        service, you agree to them. If you do not agree, do not use the service.
       </p>
 
       <Section heading="1. What AccessAI2 is">
@@ -141,7 +139,7 @@ export default function TermsPage() {
 
       <Section heading="13. Governing law">
         <p>
-          These terms are governed by the laws of <Pending>state or territory</Pending>, Australia,
+          These terms are governed by the laws of Australia,
           and you submit to the non-exclusive jurisdiction of the courts of that jurisdiction.
         </p>
       </Section>
@@ -150,11 +148,11 @@ export default function TermsPage() {
         <p>
           IRIS-Monde
           <br />
-          <Pending>registered entity name</Pending>
+          Australia
           <br />
-          <Pending>business address, state, postcode</Pending>
-          <br />
-          <Pending>contact email</Pending>
+          <a href="mailto:irismonde1711@gmail.com" className="text-teal underline">
+            irismonde1711@gmail.com
+          </a>
         </p>
       </Section>
     </LegalPage>

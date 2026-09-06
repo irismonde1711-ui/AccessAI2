@@ -1,16 +1,6 @@
 import Link from "next/link";
 import { LogoMark } from "@/components/ui/Logo";
 
-// Values IRIS-Monde still has to confirm are rendered as visible placeholders
-// rather than guessed, so nothing incorrect is published as a legal commitment.
-export function Pending({ children }: { children: React.ReactNode }) {
-  return (
-    <mark className="rounded bg-amber-200 px-1.5 py-0.5 font-medium text-amber-900">
-      [{children}]
-    </mark>
-  );
-}
-
 export function LegalPage({
   title,
   updated,
