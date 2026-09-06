@@ -23,7 +23,7 @@ export async function GET(
 
   const { data: messages, error } = await supabase
     .from("chat_messages")
-    .select("id, role, message, created_at")
+    .select("id, role, message, attachments, created_at")
     .eq("session_id", id)
     .order("created_at", { ascending: true });
 

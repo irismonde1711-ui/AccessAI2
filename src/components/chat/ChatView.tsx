@@ -7,11 +7,15 @@ import { LogoMark } from "@/components/ui/Logo";
 import { useVoiceInput } from "@/lib/useVoiceInput";
 import { useIsMobile } from "@/lib/useIsMobile";
 import { PlusIcon, MicIcon, SendIcon, PinIcon, CloseIcon } from "@/components/ui/Icons";
+import { createClient } from "@/lib/supabase/client";
+
+type MessageFile = { filename: string; mimeType: string };
 
 type Message = {
   id: string;
   role: "user" | "assistant";
   text: string;
+  files?: MessageFile[];
 };
 
 type Attachment = { file: File; id: string };
@@ -41,6 +45,7 @@ export function ChatView({
   onTogglePin,
   initialInput = "",
   projectId = null,
+  isLoggedIn = false,
 }: {
   fullName: string | null;
   initialMessages?: Message[];
@@ -53,6 +58,7 @@ export function ChatView({
   onTogglePin?: () => void;
   initialInput?: string;
   projectId?: string | null;
+  isLoggedIn?: boolean;
 }) {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [input, setInput] = useState(initialInput);
@@ -90,11 +96,17 @@ export function ChatView({
     const text = input.trim();
     if (!text || streaming) return;
 
+    const pendingFiles = attachments;
     setError(null);
     setInput("");
     setAttachments([]);
     setSlowResponse(false);
-    const userMessage: Message = { id: crypto.randomUUID(), role: "user", text };
+    const userMessage: Message = {
+      id: crypto.randomUUID(),
+      role: "user",
+      text,
+      files: pendingFiles.map((a) => ({ filename: a.file.name, mimeType: a.file.type })),
+    };
     const assistantId = crypto.randomUUID();
     const nextMessages = [...messages, userMessage];
     setMessages([...nextMessages, { id: assistantId, role: "assistant", text: "" }]);
@@ -105,6 +117,21 @@ export function ChatView({
     const slowTimer = setTimeout(() => setSlowResponse(true), 8000);
 
     try {
+      // Files go straight from the browser to Storage: routing them through the
+      // API would hit Vercel's 4.5MB request cap well before the 10MB per-file
+      // limit the spec allows.
+      let uploaded;
+      try {
+        uploaded = await uploadAttachments(pendingFiles);
+      } catch (uploadErr) {
+        clearTimeout(slowTimer);
+        setMessages((prev) => prev.filter((m) => m.id !== assistantId && m.id !== userMessage.id));
+        setAttachments(pendingFiles);
+        setAttachError((uploadErr as Error).message);
+        setStreaming(false);
+        return;
+      }
+
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -113,6 +140,7 @@ export function ChatView({
           sessionId: sessionIdRef.current,
           isTemporary,
           projectId: sessionIdRef.current ? undefined : projectId,
+          attachments: uploaded,
           messages: nextMessages.map((m) => ({
             role: m.role === "assistant" ? "model" : "user",
             text: m.text,
@@ -123,7 +151,15 @@ export function ChatView({
       if (res.status === 429) {
         const data = await res.json();
         setMessages((prev) => prev.filter((m) => m.id !== assistantId && m.id !== userMessage.id));
-        onLimitReached(data.unlockAt);
+        // A document-only limit stays an inline warning: plain text messages
+        // are still allowed, so the chat must not be locked out (spec §6.4).
+        if (data.error === "document_limit_reached") {
+          setInput(userMessage.text);
+          setAttachments(pendingFiles);
+          setAttachError("You've used all your document uploads for this window.");
+        } else {
+          onLimitReached(data.unlockAt);
+        }
         setStreaming(false);
         return;
       }
@@ -156,8 +192,11 @@ export function ChatView({
           break;
         }
         text += chunk;
+        // Snapshot per iteration: closing over the running accumulator would
+        // hand React a value that keeps changing after the update is queued.
+        const soFar = text;
         setMessages((prev) =>
-          prev.map((m) => (m.id === assistantId ? { ...m, text } : m)),
+          prev.map((m) => (m.id === assistantId ? { ...m, text: soFar } : m)),
         );
       }
 
@@ -194,7 +233,34 @@ export function ChatView({
   }
 
   function handleAttachClick() {
+    // Storage RLS scopes every object to its owner's id, so there is nowhere
+    // for a guest's upload to live.
+    if (!isLoggedIn) {
+      setAttachError("Log in to upload documents.");
+      return;
+    }
     fileInputRef.current?.click();
+  }
+
+  async function uploadAttachments(pending: Attachment[]) {
+    if (pending.length === 0) return [];
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return [];
+
+    return Promise.all(
+      pending.map(async (a) => {
+        // Storage RLS requires the first path segment to be the owner's id.
+        const path = `${user.id}/${crypto.randomUUID()}-${a.file.name}`;
+        const { error: uploadError } = await supabase.storage
+          .from("chat-attachments")
+          .upload(path, a.file, { contentType: a.file.type });
+        if (uploadError) throw new Error(`Couldn't upload ${a.file.name}.`);
+        return { storagePath: path, filename: a.file.name, mimeType: a.file.type };
+      }),
+    );
   }
 
   function handleFilesSelected(e: React.ChangeEvent<HTMLInputElement>) {
@@ -402,7 +468,21 @@ export function ChatView({
                       ) : m.role === "assistant" ? (
                         <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.text}</ReactMarkdown>
                       ) : (
-                        m.text
+                        <>
+                          {m.files && m.files.length > 0 && (
+                            <div className="mb-2 flex flex-wrap gap-1.5">
+                              {m.files.map((f) => (
+                                <span
+                                  key={f.filename}
+                                  className="max-w-[200px] truncate rounded-lg bg-white/20 px-2 py-1 text-xs"
+                                >
+                                  {f.filename}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          {m.text}
+                        </>
                       )}
                     </div>
                     {m.role === "assistant" && m.text && !isStreamingThis && (

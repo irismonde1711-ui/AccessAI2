@@ -7,6 +7,17 @@ import { streamAssistantReply, type ChatTurn } from "@/lib/ai/gemini";
 // long compliance answer needs considerably more than that before it finishes.
 export const maxDuration = 60;
 
+const ATTACHMENT_BUCKET = "chat-attachments";
+
+// What the client sends after uploading straight to Storage. The file bytes
+// never pass through this route — Vercel caps request bodies at 4.5MB, well
+// under the 10MB per-file limit the spec allows.
+type StoredAttachment = {
+  storagePath: string;
+  filename: string;
+  mimeType: string;
+};
+
 function getClientIp(request: NextRequest): string {
   return (
     request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
@@ -21,11 +32,13 @@ export async function POST(request: NextRequest) {
     isTemporary = false,
     projectId = null,
     messages,
+    attachments = [],
   } = body as {
     sessionId: string | null;
     isTemporary: boolean;
     projectId?: string | null;
     messages: ChatTurn[];
+    attachments?: StoredAttachment[];
   };
 
   if (!Array.isArray(messages) || messages.length === 0) {
@@ -58,6 +71,37 @@ export async function POST(request: NextRequest) {
       { status: 429 },
     );
   }
+
+  // Documents are a separate quota, counted per file rather than per message
+  // (spec §6.2), so three files in one message consume three of the allowance.
+  if (attachments.length > 0) {
+    const { data: docUsage, error: docError } = await admin.rpc("check_and_record_usage", {
+      p_user_id: user?.id ?? null,
+      p_ip_address: user ? null : ip,
+      p_action: "document",
+      p_requested_count: attachments.length,
+    });
+    if (docError) return Response.json({ error: docError.message }, { status: 500 });
+    if (!docUsage.allowed) {
+      return Response.json(
+        { error: "document_limit_reached", unlockAt: docUsage.unlock_at },
+        { status: 429 },
+      );
+    }
+  }
+
+  const modelFiles = await Promise.all(
+    attachments.map(async (a) => {
+      const { data, error } = await admin.storage.from(ATTACHMENT_BUCKET).download(a.storagePath);
+      if (error || !data) {
+        console.error(`[chat] could not read attachment ${a.storagePath}:`, error?.message);
+        return null;
+      }
+      const base64 = Buffer.from(await data.arrayBuffer()).toString("base64");
+      return { mimeType: a.mimeType, data: base64 };
+    }),
+  );
+  const files = modelFiles.filter((f): f is NonNullable<typeof f> => f !== null);
 
   const shouldPersist = Boolean(user) && !isTemporary;
   let activeSessionId: string | null = sessionId;
@@ -95,6 +139,14 @@ export async function POST(request: NextRequest) {
         user_id: user!.id,
         role: "user",
         message: lastUserMessage.text,
+        attachments: attachments.length
+          ? attachments.map((a) => ({
+              storage_path: a.storagePath,
+              filename: a.filename,
+              mime_type: a.mimeType,
+              content_type: a.mimeType.startsWith("image/") ? "image" : "document",
+            }))
+          : null,
       });
     }
   }
@@ -108,8 +160,11 @@ export async function POST(request: NextRequest) {
     async start(controller) {
       const encoder = new TextEncoder();
       try {
+        const turns = files.length
+          ? messages.map((m, i) => (i === messages.length - 1 ? { ...m, files } : m))
+          : messages;
         for await (const chunk of streamAssistantReply(
-          messages,
+          turns,
           upstreamController.signal,
         )) {
           assistantText += chunk;

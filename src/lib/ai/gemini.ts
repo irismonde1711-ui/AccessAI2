@@ -18,7 +18,10 @@ Stay scoped to these professional/compliance domains — you are not a general-p
 const EVENT_SEPARATOR = /\r\n\r\n|\n\n|\r\r/;
 const LINE_BREAK = /\r\n|\n|\r/;
 
-export type ChatTurn = { role: "user" | "model"; text: string };
+// Files ride along as inline base64 parts on the turn that carried them, which
+// is what Gemini's multimodal content format expects.
+export type ChatFile = { mimeType: string; data: string };
+export type ChatTurn = { role: "user" | "model"; text: string; files?: ChatFile[] };
 
 export async function* streamAssistantReply(
   turns: ChatTurn[],
@@ -47,7 +50,15 @@ export async function* streamAssistantReply(
 
   const requestBody = JSON.stringify({
     systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-    contents: turns.map((t) => ({ role: t.role, parts: [{ text: t.text }] })),
+    contents: turns.map((t) => ({
+      role: t.role,
+      parts: [
+        ...(t.files ?? []).map((f) => ({
+          inlineData: { mimeType: f.mimeType, data: f.data },
+        })),
+        { text: t.text },
+      ],
+    })),
   });
 
   // Gemini occasionally returns transient 429/503 "overloaded" errors, and the

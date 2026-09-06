@@ -28,7 +28,12 @@ type ModalState =
   | "email"
   | null;
 
-type Message = { id: string; role: "user" | "assistant"; text: string };
+type Message = {
+  id: string;
+  role: "user" | "assistant";
+  text: string;
+  files?: { filename: string; mimeType: string }[];
+};
 
 function findPinned(data: SidebarData, sessionId: string | null): boolean {
   if (!sessionId) return false;
@@ -126,11 +131,22 @@ export function HomeShell({
     const data = await res.json();
     setActiveSessionId(id);
     setSessionMessages(
-      data.messages.map((m: { id: string; role: string; message: string }) => ({
-        id: m.id,
-        role: m.role,
-        text: m.message,
-      })),
+      data.messages.map(
+        (m: {
+          id: string;
+          role: string;
+          message: string;
+          attachments: { filename: string; mime_type: string }[] | null;
+        }) => ({
+          id: m.id,
+          role: m.role,
+          text: m.message,
+          files: (m.attachments ?? []).map((a) => ({
+            filename: a.filename,
+            mimeType: a.mime_type,
+          })),
+        }),
+      ),
     );
     setTemporaryChat(false);
     setPrefill("");
@@ -246,6 +262,7 @@ export function HomeShell({
           initialInput={prefill}
           isTemporary={temporaryChat}
           projectId={pendingProjectId}
+          isLoggedIn={isLoggedIn}
           onLimitReached={setLimitUnlockAt}
           onSessionCreated={handleSessionCreated}
           onEmailResponse={
