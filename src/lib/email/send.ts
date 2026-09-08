@@ -11,10 +11,6 @@ export type DeliveryResult =
   | { delivered: false; reason: "not_configured" }
   | { delivered: false; reason: "provider_error"; detail: string };
 
-export function isDeliveryConfigured(): boolean {
-  return Boolean(process.env.RESEND_API_KEY && process.env.EMAIL_FROM);
-}
-
 export async function deliverEmail({
   to,
   subject,
