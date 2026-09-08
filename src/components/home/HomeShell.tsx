@@ -108,15 +108,28 @@ export function HomeShell({
     headerSubtitle = "Nothing sent yet";
   }
 
+  // The signed-in conversation lives in client state, so refreshing server data
+  // alone would leave the previous account's messages on screen.
+  function clearConversationState() {
+    setActiveSessionId(null);
+    setSessionMessages([]);
+    setTemporaryChat(false);
+    setPrefill("");
+    setPendingProjectId(null);
+    setChatKey((k) => k + 1);
+  }
+
   async function handleLogout() {
     const supabase = createClient();
     await supabase.auth.signOut();
     setModal(null);
+    clearConversationState();
     router.refresh();
   }
 
   function handleAuthSuccess(justSignedUp: boolean) {
     setModal(justSignedUp ? "subscribe" : null);
+    clearConversationState();
     router.refresh();
   }
 

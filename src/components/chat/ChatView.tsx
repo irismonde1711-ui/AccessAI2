@@ -498,7 +498,9 @@ export function ChatView({
           <LogoMark size={30} iconOnly />
         </div>
         <h1 className="font-display text-3xl font-semibold text-navy-deeper dark:text-white">
-          {fullName ? `Good to see you, ${fullName.split(" ")[0]}.` : "Where should we begin?"}
+          {fullName
+            ? `Good to see you, ${fullName.split(" ")[0]}.`
+            : "Start Purposely Driven Projects"}
         </h1>
         <p className="mt-2 text-muted-grey dark:text-white/50">
           {fullName
