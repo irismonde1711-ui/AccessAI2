@@ -4,7 +4,24 @@
 // Delivery is optional: when no provider is configured the caller still records
 // the send for audit and quota purposes, but must not claim it was delivered.
 
+import { marked } from "marked";
+
 const RESEND_ENDPOINT = "https://api.resend.com/emails";
+
+// Assistant replies are markdown, so a text-only send delivers raw pipes and
+// asterisks where the recipient expects a table. Send both parts and let the
+// client pick: HTML where supported, the original markdown as the fallback.
+function renderHtml(body: string): string {
+  const content = marked.parse(body, { async: false, gfm: true, breaks: true });
+  return `<!doctype html>
+<html>
+  <body style="margin:0;padding:24px;background:#f5f7fb">
+    <div style="max-width:600px;margin:0 auto;padding:28px;background:#fff;border-radius:12px;border:1px solid #e5e8f0;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.6;color:#00124a">
+      ${content}
+    </div>
+  </body>
+</html>`;
+}
 
 export type DeliveryResult =
   | { delivered: true }
@@ -30,7 +47,7 @@ export async function deliverEmail({
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ from, to: [to], subject, text: body }),
+    body: JSON.stringify({ from, to: [to], subject, text: body, html: renderHtml(body) }),
   });
 
   if (!res.ok) {
