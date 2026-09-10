@@ -10,7 +10,7 @@ export default function TermsPage() {
   return (
     <LegalPage title="Terms of Service" updated="6 September 2026">
       <p>
-        These terms govern your use of AccessAI2, operated by IRIS-Monde. By creating an account or using the
+        These terms govern your use of AccessAI2, operated by Reseaux Access Pty Ltd. By creating an account or using the
         service, you agree to them. If you do not agree, do not use the service.
       </p>
 
@@ -27,7 +27,7 @@ export default function TermsPage() {
           <strong>Important.</strong> AccessAI2 generates responses using an AI language model. Its
           output is general information only. It is <strong>not</strong> legal, financial,
           accounting, taxation, audit or professional advice, and it does not create a
-          client&nbsp;relationship with IRIS-Monde. Responses may be incomplete, out of date or
+          client&nbsp;relationship with Reseaux Access Pty Ltd. Responses may be incomplete, out of date or
           incorrect, including where they cite legislation, standards or dates. You must
           independently verify anything you intend to rely on, and obtain advice from a qualified
           professional before acting. You remain solely responsible for decisions you make and for
@@ -115,7 +115,7 @@ export default function TermsPage() {
 
       <Section heading="10. Limitation of liability">
         <p>
-          To the maximum extent permitted by law, and subject to clause 9, IRIS-Monde is not liable
+          To the maximum extent permitted by law, and subject to clause 9, Reseaux Access Pty Ltd is not liable
           for indirect or consequential loss, loss of profits, loss of data, or loss arising from
           reliance on AI-generated output. Our total liability arising out of the service is limited
           to the amount you paid us in the 12 months before the claim.
@@ -139,20 +139,43 @@ export default function TermsPage() {
 
       <Section heading="13. Governing law">
         <p>
-          These terms are governed by the laws of Australia,
-          and you submit to the non-exclusive jurisdiction of the courts of that jurisdiction.
+          These terms are governed by the laws in force in Victoria, Australia. Subject to any
+          mandatory dispute-resolution mechanism or rights that cannot lawfully be excluded, you
+          submit to the courts of Victoria, Australia and courts entitled to hear appeals from them.
+          Nothing here prevents a consumer from exercising rights or pursuing remedies available
+          under applicable Australian law.
         </p>
       </Section>
 
-      <Section heading="14. Contact">
+      <Section heading="14. Disputes">
         <p>
-          IRIS-Monde
-          <br />
-          Australia
-          <br />
-          <a href="mailto:irismonde1711@gmail.com" className="text-teal underline">
-            irismonde1711@gmail.com
+          If you have a concern or dispute, please contact us first so we can try to resolve it
+          informally at{" "}
+          <a href="mailto:info@reseauxaccess.com" className="text-teal underline">
+            info@reseauxaccess.com
           </a>
+          . Where a dispute cannot be resolved informally, either party may pursue it through the
+          courts or other dispute-resolution mechanisms available under applicable law. Nothing here
+          prevents a party from seeking urgent injunctive or equitable relief where appropriate.
+        </p>
+      </Section>
+
+      <Section heading="15. Contact">
+        <p>
+          Reseaux Access Pty Ltd
+          <br />
+          Victoria, Australia
+          <br />
+          <a href="mailto:contact@reseauxaccess.com" className="text-teal underline">
+            contact@reseauxaccess.com
+          </a>
+          <br />
+          <a href="https://www.reseauxaccess.com" className="text-teal underline">
+            www.reseauxaccess.com
+          </a>
+        </p>
+        <p className="text-sm text-muted-grey dark:text-white/50">
+          © 2026 Reseaux Access Pty Ltd. All rights reserved.
         </p>
       </Section>
     </LegalPage>

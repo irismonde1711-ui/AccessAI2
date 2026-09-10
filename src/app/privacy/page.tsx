@@ -10,7 +10,7 @@ export default function PrivacyPage() {
   return (
     <LegalPage title="Privacy Policy" updated="6 September 2026">
       <p>
-        AccessAI2 is operated by IRIS-Monde (&quot;we&quot;, &quot;us&quot;). This policy explains
+        AccessAI2 is operated by Reseaux Access Pty Ltd (&quot;we&quot;, &quot;us&quot;). This policy explains
         what personal information we collect when you use AccessAI2, how we handle it, and the
         choices you have. We handle personal information in accordance with the{" "}
         <em>Privacy Act 1988</em> (Cth) and the Australian Privacy Principles (APPs).
@@ -136,7 +136,7 @@ export default function PrivacyPage() {
         <p>
           You may request access to the personal information we hold about you, ask us to correct
           it, or ask us to delete your account and associated data. Contact us at{" "}
-          <a href="mailto:irismonde1711@gmail.com" className="text-teal underline">irismonde1711@gmail.com</a> and we will respond within a reasonable period.
+          <a href="mailto:contact@reseauxaccess.com" className="text-teal underline">contact@reseauxaccess.com</a> and we will respond within a reasonable period.
           If we refuse a request, we will tell you why.
         </p>
       </Section>
@@ -152,7 +152,7 @@ export default function PrivacyPage() {
       <Section heading="9. Complaints">
         <p>
           If you believe we have mishandled your personal information, contact us first at{" "}
-          <a href="mailto:irismonde1711@gmail.com" className="text-teal underline">irismonde1711@gmail.com</a> so we can investigate. If you are not satisfied
+          <a href="mailto:contact@reseauxaccess.com" className="text-teal underline">contact@reseauxaccess.com</a> so we can investigate. If you are not satisfied
           with our response, you may complain to the Office of the Australian Information
           Commissioner (OAIC) at oaic.gov.au or on 1300 363 992.
         </p>
@@ -167,13 +167,20 @@ export default function PrivacyPage() {
 
       <Section heading="11. Contact us">
         <p>
-          IRIS-Monde
+          Reseaux Access Pty Ltd
           <br />
-          Australia
+          Victoria, Australia
           <br />
-          <a href="mailto:irismonde1711@gmail.com" className="text-teal underline">
-            irismonde1711@gmail.com
+          <a href="mailto:contact@reseauxaccess.com" className="text-teal underline">
+            contact@reseauxaccess.com
           </a>
+          <br />
+          <a href="https://www.reseauxaccess.com" className="text-teal underline">
+            www.reseauxaccess.com
+          </a>
+        </p>
+        <p className="text-sm text-muted-grey dark:text-white/50">
+          © 2026 Reseaux Access Pty Ltd. All rights reserved.
         </p>
       </Section>
     </LegalPage>
