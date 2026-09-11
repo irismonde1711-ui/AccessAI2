@@ -10,10 +10,11 @@ export default function PrivacyPage() {
   return (
     <LegalPage title="Privacy Policy" updated="6 September 2026">
       <p>
-        AccessAI2 is operated by Reseaux Access Pty Ltd (&quot;we&quot;, &quot;us&quot;). This policy explains
-        what personal information we collect when you use AccessAI2, how we handle it, and the
-        choices you have. We handle personal information in accordance with the{" "}
-        <em>Privacy Act 1988</em> (Cth) and the Australian Privacy Principles (APPs).
+        AccessAI2 is a product of Reseaux Access Pty Ltd (ABN 88 682 898 746), trading as Iris Monde
+        (&quot;we&quot;, &quot;us&quot;). This policy explains what personal information we collect
+        when you use AccessAI2, how we handle it, and the choices you have. We handle personal
+        information in accordance with the <em>Privacy Act 1988</em> (Cth) and the Australian
+        Privacy Principles (APPs).
       </p>
 
       <Section heading="1. Information we collect">
@@ -167,7 +168,9 @@ export default function PrivacyPage() {
 
       <Section heading="11. Contact us">
         <p>
-          Reseaux Access Pty Ltd
+          Reseaux Access Pty Ltd (ABN 88 682 898 746)
+          <br />
+          Trading as Iris Monde
           <br />
           Victoria, Australia
           <br />

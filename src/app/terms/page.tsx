@@ -10,8 +10,13 @@ export default function TermsPage() {
   return (
     <LegalPage title="Terms of Service" updated="6 September 2026">
       <p>
-        These terms govern your use of AccessAI2, operated by Reseaux Access Pty Ltd. By creating an account or using the
-        service, you agree to them. If you do not agree, do not use the service.
+        These terms govern your use of AccessAI2, a product of Reseaux Access Pty Ltd
+        (ABN 88 682 898 746), trading as Iris Monde. By creating an account or using the service,
+        you agree to them. If you do not agree, do not use the service.
+      </p>
+      <p>
+        They sit alongside the Iris Monde Terms of Reference, which govern the wider platform. Where
+        a conflict arises, the Terms of Reference prevail to the extent of the inconsistency.
       </p>
 
       <Section heading="1. What AccessAI2 is">
@@ -162,7 +167,9 @@ export default function TermsPage() {
 
       <Section heading="15. Contact">
         <p>
-          Reseaux Access Pty Ltd
+          Reseaux Access Pty Ltd (ABN 88 682 898 746)
+          <br />
+          Trading as Iris Monde
           <br />
           Victoria, Australia
           <br />
