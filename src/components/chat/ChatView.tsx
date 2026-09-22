@@ -499,12 +499,12 @@ export function ChatView({
         </div>
         <h1 className="font-display text-3xl font-semibold text-navy-deeper dark:text-white">
           {fullName
-            ? `Good to see you, ${fullName.split(" ")[0]}.`
+            ? "Bonjour"
             : "Start Purposely Driven Projects"}
         </h1>
         <p className="mt-2 text-muted-grey dark:text-white/50">
           {fullName
-            ? "What would you like to work through today?"
+            ? "What brings you to us today?"
             : "Ask a compliance question, or see what this assistant can do."}
         </p>
         {!fullName && (
