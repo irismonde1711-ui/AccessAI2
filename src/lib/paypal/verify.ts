@@ -5,43 +5,19 @@
 // PAYMENT.CAPTURE.COMPLETED naming any email address and grant that account a
 // paid subscription.
 
-const LIVE_API = "https://api-m.paypal.com";
-const SANDBOX_API = "https://api-m.sandbox.paypal.com";
-
-function apiBase(): string {
-  return process.env.PAYPAL_ENV === "sandbox" ? SANDBOX_API : LIVE_API;
-}
+import { paypalAccessToken, paypalApiBase } from "@/lib/paypal/api";
 
 export type VerifyOutcome =
   | { verified: true }
   | { verified: false; reason: "not_configured" | "missing_headers" | "rejected" | "error" };
 
-async function accessToken(clientId: string, secret: string): Promise<string | null> {
-  const res = await fetch(`${apiBase()}/v1/oauth2/token`, {
-    method: "POST",
-    headers: {
-      Authorization: `Basic ${Buffer.from(`${clientId}:${secret}`).toString("base64")}`,
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: "grant_type=client_credentials",
-  });
-  if (!res.ok) {
-    console.error(`[paypal] token request failed: ${res.status}`);
-    return null;
-  }
-  const json = await res.json();
-  return json.access_token ?? null;
-}
-
 export async function verifyWebhookSignature(
   headers: Headers,
   rawBody: string,
 ): Promise<VerifyOutcome> {
-  const clientId = process.env.PAYPAL_CLIENT_ID;
-  const secret = process.env.PAYPAL_CLIENT_SECRET;
   const webhookId = process.env.PAYPAL_WEBHOOK_ID;
 
-  if (!clientId || !secret || !webhookId) {
+  if (!process.env.PAYPAL_CLIENT_ID || !process.env.PAYPAL_CLIENT_SECRET || !webhookId) {
     return { verified: false, reason: "not_configured" };
   }
 
@@ -55,10 +31,10 @@ export async function verifyWebhookSignature(
     return { verified: false, reason: "missing_headers" };
   }
 
-  const token = await accessToken(clientId, secret);
+  const token = await paypalAccessToken();
   if (!token) return { verified: false, reason: "error" };
 
-  const res = await fetch(`${apiBase()}/v1/notifications/verify-webhook-signature`, {
+  const res = await fetch(`${paypalApiBase()}/v1/notifications/verify-webhook-signature`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
     // webhook_event must be the parsed body: PayPal re-serialises it their way.

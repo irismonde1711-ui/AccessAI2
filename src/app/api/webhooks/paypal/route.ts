@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { verifyWebhookSignature } from "@/lib/paypal/verify";
+import { grantSubscription } from "@/lib/data/subscription";
 
 // Grants/renews access when a PayPal payment completes (spec §7.2).
 //
@@ -7,8 +8,6 @@ import { verifyWebhookSignature } from "@/lib/paypal/verify";
 // fails closed: an unverified event grants nothing, because the alternative is
 // letting anyone who finds this URL name an email address and award themselves
 // a paid plan. A rejected event still returns 200 so PayPal stops retrying.
-const SUBSCRIPTION_DAYS = 30;
-
 export async function POST(request: Request) {
   // Read once as text: verification needs the body exactly as delivered.
   const rawBody = await request.text();
@@ -52,30 +51,19 @@ export async function POST(request: Request) {
     return Response.json({ ok: true });
   }
 
-  const now = new Date();
-  const expiresAt = new Date(now.getTime() + SUBSCRIPTION_DAYS * 24 * 60 * 60 * 1000);
+  // Checkout normally grants access during the capture call, while the user is
+  // still on the page. Re-running it here is harmless: the same order id is
+  // recognised and the row is simply rewritten.
+  const { data: claimed } = orderId
+    ? await admin
+        .from("subscriptions")
+        .select("user_id, expires_at")
+        .eq("paypal_order_id", orderId)
+        .maybeSingle()
+    : { data: null };
+  if (claimed) return Response.json({ ok: true, alreadyGranted: true });
 
-  const { data: existing } = await admin
-    .from("subscriptions")
-    .select("id")
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  const fields = {
-    status: "active" as const,
-    started_at: now.toISOString(),
-    expires_at: expiresAt.toISOString(),
-    paypal_order_id: orderId ?? null,
-    paypal_payer_email: payerEmail,
-    ...(amount ? { amount } : {}),
-    ...(currency ? { currency } : {}),
-  };
-
-  if (existing) {
-    await admin.from("subscriptions").update(fields).eq("id", existing.id);
-  } else {
-    await admin.from("subscriptions").insert({ user_id: userId, plan: "essential", ...fields });
-  }
+  await grantSubscription(admin, userId, { orderId, payerEmail, amount, currency });
 
   return Response.json({ ok: true });
 }

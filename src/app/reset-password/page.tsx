@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { ForgotPasswordModal } from "@/components/auth/ForgotPasswordModal";
 import { isValidPassword } from "@/lib/validation";
 import { LogoMark } from "@/components/ui/Logo";
+import { EyeIcon, EyeOffIcon } from "@/components/ui/Icons";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -14,26 +16,70 @@ export default function ResetPasswordPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [linkError, setLinkError] = useState<string | null>(null);
+  const [requestingNew, setRequestingNew] = useState(false);
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Supabase hands the recovery session over in one of three shapes depending
+  // on the project's email template and flow: tokens in the URL fragment, a
+  // `code` to exchange, or a `token_hash` to verify. Handle all of them rather
+  // than relying on the client picking it up on its own, and surface the real
+  // reason when the link itself is dead.
   useEffect(() => {
     const supabase = createClient();
+    let cancelled = false;
 
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) setEmail(data.user.email ?? null);
-      setReady(true);
-    });
+    async function init() {
+      const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+      const query = new URLSearchParams(window.location.search);
 
-    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "PASSWORD_RECOVERY" && session?.user) {
-        setEmail(session.user.email ?? null);
-        setReady(true);
+      const failure = hash.get("error_description") ?? query.get("error_description");
+      if (failure) {
+        if (!cancelled) {
+          setLinkError(failure.replace(/\+/g, " "));
+          setReady(true);
+        }
+        return;
       }
-    });
 
-    return () => sub.subscription.unsubscribe();
+      const accessToken = hash.get("access_token");
+      const refreshToken = hash.get("refresh_token");
+      const code = query.get("code");
+      const tokenHash = query.get("token_hash");
+
+      try {
+        if (accessToken && refreshToken) {
+          await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+        } else if (tokenHash) {
+          await supabase.auth.verifyOtp({ type: "recovery", token_hash: tokenHash });
+        } else if (code) {
+          await supabase.auth.exchangeCodeForSession(code);
+        }
+      } catch {
+        // Fall through: getUser below decides whether we have a session.
+      }
+
+      // Keep the one-time tokens out of the address bar and out of history.
+      if (accessToken || code || tokenHash) {
+        window.history.replaceState(null, "", window.location.pathname);
+      }
+
+      const { data } = await supabase.auth.getUser();
+      if (cancelled) return;
+      setEmail(data.user?.email ?? null);
+      setReady(true);
+    }
+
+    init();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -89,7 +135,21 @@ export default function ResetPasswordPage() {
               Reset link invalid or expired
             </h1>
             <p className="mt-2 text-sm text-white/60">
-              Request a new password reset link from the login screen.
+              {linkError
+                ? `${linkError}. Reset links can only be used once, and expire after an hour.`
+                : "Reset links can only be used once, and expire after an hour. Send yourself a fresh one below."}
+            </p>
+            <button
+              type="button"
+              onClick={() => setRequestingNew(true)}
+              className="mt-6 w-full rounded-full bg-teal py-3 text-sm font-semibold text-white transition hover:brightness-110"
+            >
+              Email me a new link
+            </button>
+            <p className="mt-5 text-center text-sm text-white/50">
+              <Link href="/" className="font-medium text-teal">
+                Back to log in
+              </Link>
             </p>
           </>
         ) : success ? (
@@ -118,14 +178,15 @@ export default function ResetPasswordPage() {
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="auth-card-input w-full rounded-xl px-4 py-3 pr-16 text-sm text-white outline-none focus:border-teal"
+                    className="auth-card-input w-full rounded-xl px-4 py-3 pr-12 text-sm text-white outline-none focus:border-teal"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword((s) => !s)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium text-teal"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/45 transition hover:text-teal"
                   >
-                    {showPassword ? "Hide" : "Show"}
+                    {showPassword ? <EyeOffIcon /> : <EyeIcon />}
                   </button>
                 </div>
               </div>
@@ -134,12 +195,22 @@ export default function ResetPasswordPage() {
                 <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-white/40">
                   Confirm password
                 </label>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="auth-card-input w-full rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-teal"
-                />
+                <div className="relative">
+                  <input
+                    type={showConfirm ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="auth-card-input w-full rounded-xl px-4 py-3 pr-12 text-sm text-white outline-none focus:border-teal"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirm((s) => !s)}
+                    aria-label={showConfirm ? "Hide password" : "Show password"}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/45 transition hover:text-teal"
+                  >
+                    {showConfirm ? <EyeOffIcon /> : <EyeIcon />}
+                  </button>
+                </div>
               </div>
 
               {error && <p className="text-sm text-red-400">{error}</p>}
@@ -162,6 +233,8 @@ export default function ResetPasswordPage() {
           </>
         )}
       </div>
+
+      {requestingNew && <ForgotPasswordModal onClose={() => setRequestingNew(false)} />}
     </div>
   );
 }

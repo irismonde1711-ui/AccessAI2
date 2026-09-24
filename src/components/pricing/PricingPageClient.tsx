@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { LogoMark } from "@/components/ui/Logo";
 import { AuthModal } from "@/components/auth/AuthModal";
@@ -8,17 +9,22 @@ import { ForgotPasswordModal } from "@/components/auth/ForgotPasswordModal";
 import { PricingDetailSection } from "@/components/pricing/PricingDetailSection";
 import { PayPalSubscribeButton } from "@/components/pricing/PayPalSubscribeButton";
 import { GlowHero } from "@/components/ui/Glow";
+import { SubscriptionSuccessModal } from "@/components/modals/SubscriptionSuccessModal";
 
 type ModalState = "login" | "signup" | "forgot" | null;
 
 export function PricingPageClient({
   isLoggedIn,
   fullName,
+  isPaid = false,
 }: {
   isLoggedIn: boolean;
   fullName: string | null;
+  isPaid?: boolean;
 }) {
   const [modal, setModal] = useState<ModalState>(null);
+  const [paidUntil, setPaidUntil] = useState<string | null>(null);
+  const router = useRouter();
 
   return (
     <div className="min-h-screen bg-panel-grey">
@@ -96,7 +102,7 @@ export function PricingPageClient({
           cta={
             isLoggedIn ? (
               <span className="block w-full rounded-full border border-navy-deeper/20 py-3 text-center text-sm font-medium text-muted-grey dark:border-white/20 dark:text-white/50">
-                Current plan
+                {isPaid ? "Included with Pro" : "Current plan"}
               </span>
             ) : (
               <button
@@ -117,8 +123,12 @@ export function PricingPageClient({
           featured
           features={["Unlimited messages and sends", "Unlimited document analysis", "Priority model access", "Compliance-tagged send log"]}
           cta={
-            isLoggedIn ? (
-              <PayPalSubscribeButton containerId="paypal-pricing-page" />
+            isPaid ? (
+              <span className="block w-full rounded-full bg-teal/15 py-3 text-center text-sm font-semibold text-teal">
+                Current plan
+              </span>
+            ) : isLoggedIn ? (
+              <PayPalSubscribeButton onSuccess={setPaidUntil} />
             ) : (
               <button
                 onClick={() => setModal("signup")}
@@ -193,6 +203,15 @@ export function PricingPageClient({
         />
       )}
       {modal === "forgot" && <ForgotPasswordModal onClose={() => setModal(null)} />}
+      {paidUntil && (
+        <SubscriptionSuccessModal
+          expiresAt={paidUntil}
+          onClose={() => {
+            setPaidUntil(null);
+            router.refresh();
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -14,6 +14,7 @@ import { NewProjectModal } from "@/components/modals/NewProjectModal";
 import { SearchConversationsModal } from "@/components/modals/SearchConversationsModal";
 import { EmailComposerModal } from "@/components/modals/EmailComposerModal";
 import { SubscribePromptModal } from "@/components/modals/SubscribePromptModal";
+import { SubscriptionSuccessModal } from "@/components/modals/SubscriptionSuccessModal";
 import { MenuIcon } from "@/components/ui/Icons";
 import { useIsMobile } from "@/lib/useIsMobile";
 import type { SidebarData } from "@/lib/data/sidebar";
@@ -84,6 +85,7 @@ export function HomeShell({
   const [emailBody, setEmailBody] = useState("");
   const [emailRecipient, setEmailRecipient] = useState("");
   const [pendingProjectId, setPendingProjectId] = useState<string | null>(null);
+  const [paidUntil, setPaidUntil] = useState<string | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const isMobile = useIsMobile();
@@ -130,6 +132,16 @@ export function HomeShell({
   function handleAuthSuccess(justSignedUp: boolean) {
     setModal(justSignedUp ? "subscribe" : null);
     clearConversationState();
+    router.refresh();
+  }
+
+  // Paying has to visibly change the app, not just the database: swap the
+  // prompt for a confirmation and re-fetch the server data so the sidebar
+  // stops offering an upgrade.
+  function handleSubscribed(expiresAt: string) {
+    setModal(null);
+    setPaidUntil(expiresAt);
+    if (searchParams.get("welcome") === "1") router.replace("/");
     router.refresh();
   }
 
@@ -350,11 +362,21 @@ export function HomeShell({
       {/* `welcome` is set by the auth callback on a confirmed account's first
           sign-in, so the prompt is derived from the URL rather than copied
           into state. */}
-      {(modal === "subscribe" || searchParams.get("welcome") === "1") && (
+      {(modal === "subscribe" || searchParams.get("welcome") === "1") && !paidUntil && (
         <SubscribePromptModal
           onClose={() => {
             setModal(null);
             if (searchParams.get("welcome") === "1") router.replace("/");
+          }}
+          onSubscribed={handleSubscribed}
+        />
+      )}
+      {paidUntil && (
+        <SubscriptionSuccessModal
+          expiresAt={paidUntil}
+          onClose={() => {
+            setPaidUntil(null);
+            router.refresh();
           }}
         />
       )}

@@ -5,7 +5,13 @@ import { PayPalSubscribeButton } from "@/components/pricing/PayPalSubscribeButto
 
 // Shown once, straight after signup (spec §8 screen 9). The PayPal button needs
 // its own container id so it can't collide with the one on the pricing page.
-export function SubscribePromptModal({ onClose }: { onClose: () => void }) {
+export function SubscribePromptModal({
+  onClose,
+  onSubscribed,
+}: {
+  onClose: () => void;
+  onSubscribed: (expiresAt: string) => void;
+}) {
   return (
     <Modal onClose={onClose}>
       <div className="text-center">
@@ -20,7 +26,7 @@ export function SubscribePromptModal({ onClose }: { onClose: () => void }) {
           unlimited for $29.
         </p>
 
-        <PayPalSubscribeButton containerId="paypal-container-signup" />
+        <PayPalSubscribeButton onSuccess={onSubscribed} />
 
         <div className="mt-3.5 flex flex-col gap-2.5">
           <button
