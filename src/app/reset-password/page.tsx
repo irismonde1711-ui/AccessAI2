@@ -132,19 +132,19 @@ export default function ResetPasswordPage() {
         ) : !email ? (
           <>
             <h1 className="font-display mt-6 text-2xl font-semibold text-white">
-              Reset link invalid or expired
+              {linkError ? "Reset link invalid or expired" : "Reset your password"}
             </h1>
             <p className="mt-2 text-sm text-white/60">
               {linkError
-                ? `${linkError}. Reset links can only be used once, and expire after an hour.`
-                : "Reset links can only be used once, and expire after an hour. Send yourself a fresh one below."}
+                ? `${linkError}. Send yourself a one-time code instead — it can't be used up by your mail app.`
+                : "Send yourself a one-time code and enter it here to set a new password."}
             </p>
             <button
               type="button"
               onClick={() => setRequestingNew(true)}
               className="mt-6 w-full rounded-full bg-teal py-3 text-sm font-semibold text-white transition hover:brightness-110"
             >
-              Email me a new link
+              Email me a code
             </button>
             <p className="mt-5 text-center text-sm text-white/50">
               <Link href="/" className="font-medium text-teal">
@@ -234,7 +234,15 @@ export default function ResetPasswordPage() {
         )}
       </div>
 
-      {requestingNew && <ForgotPasswordModal onClose={() => setRequestingNew(false)} />}
+      {requestingNew && (
+        <ForgotPasswordModal
+          onClose={() => setRequestingNew(false)}
+          // Already on this page, so a route push would not re-run the
+          // session check: reload instead, now that the code has signed
+          // the user in.
+          onVerified={() => window.location.replace("/reset-password")}
+        />
+      )}
     </div>
   );
 }
