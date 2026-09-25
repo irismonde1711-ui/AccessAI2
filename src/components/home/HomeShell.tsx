@@ -11,6 +11,7 @@ import { Sidebar } from "@/components/sidebar/Sidebar";
 import { SettingsModal } from "@/components/modals/SettingsModal";
 import { LogoutConfirmModal } from "@/components/modals/LogoutConfirmModal";
 import { NewProjectModal } from "@/components/modals/NewProjectModal";
+import { DeleteProjectModal } from "@/components/modals/DeleteProjectModal";
 import { SearchConversationsModal } from "@/components/modals/SearchConversationsModal";
 import { EmailComposerModal } from "@/components/modals/EmailComposerModal";
 import { SubscribePromptModal } from "@/components/modals/SubscribePromptModal";
@@ -86,6 +87,7 @@ export function HomeShell({
   const [emailRecipient, setEmailRecipient] = useState("");
   const [pendingProjectId, setPendingProjectId] = useState<string | null>(null);
   const [paidUntil, setPaidUntil] = useState<string | null>(null);
+  const [projectToDelete, setProjectToDelete] = useState<{ id: string; name: string } | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const isMobile = useIsMobile();
@@ -238,6 +240,7 @@ export function HomeShell({
         onToggleTemporary={() => setTemporaryChat((t) => !t)}
         onOpenSearch={() => setModal("search")}
         onOpenNewProject={() => setModal("newProject")}
+        onDeleteProject={setProjectToDelete}
         onOpenSettings={() => setModal("settings")}
         onOpenBilling={() => router.push("/pricing")}
         onOpenLogout={() => setModal("logout")}
@@ -348,6 +351,16 @@ export function HomeShell({
           onClose={() => setModal(null)}
           onCreated={() => {
             setModal(null);
+            router.refresh();
+          }}
+        />
+      )}
+      {projectToDelete && (
+        <DeleteProjectModal
+          project={projectToDelete}
+          onClose={() => setProjectToDelete(null)}
+          onDeleted={() => {
+            setProjectToDelete(null);
             router.refresh();
           }}
         />

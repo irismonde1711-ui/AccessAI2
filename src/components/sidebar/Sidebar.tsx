@@ -13,8 +13,7 @@ import {
   PlusIcon,
   ChevronIcon,
   CloseIcon,
-  ClockIcon,
-} from "@/components/ui/Icons";
+  ClockIcon, TrashIcon } from "@/components/ui/Icons";
 import type { SidebarData } from "@/lib/data/sidebar";
 
 const EXPLORE_PROMPTS = [
@@ -38,6 +37,7 @@ export function Sidebar({
   onToggleTemporary,
   onOpenSearch,
   onOpenNewProject,
+  onDeleteProject,
   onOpenSettings,
   onOpenBilling,
   onOpenLogout,
@@ -62,6 +62,7 @@ export function Sidebar({
   onToggleTemporary: () => void;
   onOpenSearch: () => void;
   onOpenNewProject: () => void;
+  onDeleteProject: (project: { id: string; name: string }) => void;
   onOpenSettings: () => void;
   onOpenBilling: () => void;
   onOpenLogout: () => void;
@@ -274,20 +275,29 @@ export function Sidebar({
             <div className="px-2">
               {data.projects.map((project) => (
                 <div key={project.id}>
-                  <button
-                    onClick={() => toggleProject(project.id)}
-                    className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm text-white/85 hover:bg-white/5"
-                  >
-                    <span
-                      className="h-2 w-2 shrink-0 rounded-full"
-                      style={{ backgroundColor: project.color }}
-                    />
-                    <span className="flex-1 truncate">{project.name}</span>
-                    <ChevronIcon
-                      size={12}
-                      className={`shrink-0 transition-transform ${expandedProjects.has(project.id) ? "rotate-90" : ""}`}
-                    />
-                  </button>
+                  <div className="group flex items-center gap-1 rounded-lg px-2 py-1.5 hover:bg-white/5">
+                    <button
+                      onClick={() => toggleProject(project.id)}
+                      className="flex min-w-0 flex-1 items-center gap-2 text-left text-sm text-white/85"
+                    >
+                      <span
+                        className="h-2 w-2 shrink-0 rounded-full"
+                        style={{ backgroundColor: project.color }}
+                      />
+                      <span className="flex-1 truncate">{project.name}</span>
+                      <ChevronIcon
+                        size={12}
+                        className={`shrink-0 transition-transform ${expandedProjects.has(project.id) ? "rotate-90" : ""}`}
+                      />
+                    </button>
+                    <button
+                      onClick={() => onDeleteProject(project)}
+                      aria-label={`Delete ${project.name}`}
+                      className="shrink-0 text-white/40 opacity-0 transition hover:text-red-300 group-hover:opacity-100"
+                    >
+                      <TrashIcon />
+                    </button>
+                  </div>
                   {expandedProjects.has(project.id) && (
                     <div className="ml-4 border-l border-white/10 pl-2">
                       {project.sessions.map((s) => (

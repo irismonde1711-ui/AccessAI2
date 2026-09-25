@@ -21,3 +21,22 @@ export async function POST(request: Request) {
   if (error) return Response.json({ error: error.message }, { status: 500 });
   return Response.json({ project: data });
 }
+
+// Removing a project unfiles its chats rather than destroying them: the
+// project_sessions rows cascade away with the project, so the conversations
+// themselves reappear under Recent.
+export async function DELETE(request: Request) {
+  const id = new URL(request.url).searchParams.get("id");
+  if (!id) return Response.json({ error: "id is required" }, { status: 400 });
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { error } = await supabase.from("projects").delete().eq("id", id).eq("user_id", user.id);
+  if (error) return Response.json({ error: error.message }, { status: 500 });
+
+  return Response.json({ ok: true });
+}
