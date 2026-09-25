@@ -14,6 +14,7 @@ import {
   ChevronIcon,
   CloseIcon,
   ClockIcon, TrashIcon } from "@/components/ui/Icons";
+import { ProjectLibrary } from "@/components/sidebar/ProjectLibrary";
 import type { SidebarData } from "@/lib/data/sidebar";
 
 const EXPLORE_PROMPTS = [
@@ -38,6 +39,8 @@ export function Sidebar({
   onOpenSearch,
   onOpenNewProject,
   onDeleteProject,
+  onProjectFilesChanged,
+  onUploadLimit,
   onOpenSettings,
   onOpenBilling,
   onOpenLogout,
@@ -63,6 +66,8 @@ export function Sidebar({
   onOpenSearch: () => void;
   onOpenNewProject: () => void;
   onDeleteProject: (project: { id: string; name: string; sessionCount: number }) => void;
+  onProjectFilesChanged: () => void;
+  onUploadLimit: (unlockAt: string) => void;
   onOpenSettings: () => void;
   onOpenBilling: () => void;
   onOpenLogout: () => void;
@@ -322,6 +327,13 @@ export function Sidebar({
                       >
                         + New chat in project
                       </button>
+                      <ProjectLibrary
+                        projectId={project.id}
+                        evidence={project.evidence}
+                        materials={project.materials}
+                        onChanged={onProjectFilesChanged}
+                        onUploadLimit={onUploadLimit}
+                      />
                     </div>
                   )}
                 </div>

@@ -2,19 +2,39 @@
 
 import { Modal } from "@/components/ui/Modal";
 
+// Which allowance ran out changes what the user should be told, so the copy
+// is picked here rather than defaulting to the message limit for everything.
+const COPY = {
+  message: {
+    heading: "Message limit reached",
+    body: "You have used all 10 free messages in this four-hour window. Uploads and email sends are unaffected.",
+  },
+  document: {
+    heading: "Upload limit reached",
+    body: "You have used all 5 free uploads in this four-hour window — that allowance covers chat attachments, evidence and materials together.",
+  },
+  email: {
+    heading: "Send limit reached",
+    body: "You have used your free email send for this four-hour window.",
+  },
+} as const;
+
 export function UsageLimitModal({
   unlockAt,
+  kind = "message",
   isLoggedIn,
   onClose,
   onCreateAccount,
   onUpgrade,
 }: {
   unlockAt: string;
+  kind?: keyof typeof COPY;
   isLoggedIn: boolean;
   onClose: () => void;
   onCreateAccount: () => void;
   onUpgrade: () => void;
 }) {
+  const copy = COPY[kind];
   const unlockTime = new Date(unlockAt).toLocaleTimeString(undefined, {
     hour: "numeric",
     minute: "2-digit",
@@ -26,12 +46,9 @@ export function UsageLimitModal({
         ⏳
       </div>
       <h2 className="font-display mt-5 text-2xl font-semibold text-navy-deeper dark:text-white">
-        Message limit reached
+        {copy.heading}
       </h2>
-      <p className="mt-2 text-sm text-muted-grey dark:text-white/60">
-        You have used all 10 free messages in this four-hour window. Uploads and email sends are
-        unaffected.
-      </p>
+      <p className="mt-2 text-sm text-muted-grey dark:text-white/60">{copy.body}</p>
 
       <div className="mt-5 flex items-center justify-between rounded-2xl border border-black/10 bg-black/[0.03] px-4 py-3 dark:border-white/10 dark:bg-white/5">
         <div>

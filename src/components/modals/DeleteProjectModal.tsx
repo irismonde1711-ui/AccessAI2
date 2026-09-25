@@ -47,7 +47,8 @@ export function DeleteProjectModal({
         </h2>
         <p className="mt-3 text-sm leading-relaxed text-muted-grey dark:text-white/60">
           This deletes the project along with {sessionCount > 0 ? chats : "its contents"}, every
-          message inside, and any documents that were uploaded. It cannot be undone.
+          message inside, and every file filed under Evidence or Materials. It cannot be
+          undone.
         </p>
 
         {error && <p className="mt-4 text-sm text-red-500">{error}</p>}
@@ -94,7 +95,8 @@ export function DeleteProjectModal({
             {loading === "folder" ? "Removing…" : "Remove the folder only"}
           </span>
           <span className="mt-1 block text-[13px] leading-relaxed text-muted-grey dark:text-white/55">
-            The conversations are kept and move back to Recent.
+            The conversations are kept and move back to Recent. Anything filed under Evidence
+            or Materials is removed with the project.
           </span>
         </button>
 
@@ -105,7 +107,7 @@ export function DeleteProjectModal({
         >
           <span className="block text-sm font-semibold text-red-500">Delete permanently</span>
           <span className="mt-1 block text-[13px] leading-relaxed text-muted-grey dark:text-white/55">
-            The project, its conversations and any uploaded documents are erased.
+            The project, its conversations, evidence and materials are erased.
           </span>
         </button>
       </div>

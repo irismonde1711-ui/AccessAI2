@@ -74,6 +74,18 @@ export async function DELETE(request: Request) {
     }
   }
 
+  // Evidence and materials belong to the project either way — the rows cascade
+  // with it, so their storage objects have to be cleared here or they are
+  // orphaned in the bucket forever.
+  const { data: libraryFiles } = await supabase
+    .from("project_files")
+    .select("storage_path")
+    .eq("project_id", id);
+  const libraryPaths = (libraryFiles ?? []).map((f) => f.storage_path).filter(Boolean);
+  if (libraryPaths.length > 0) {
+    await supabase.storage.from("chat-attachments").remove(libraryPaths);
+  }
+
   const { error } = await supabase.from("projects").delete().eq("id", id).eq("user_id", user.id);
   if (error) return Response.json({ error: error.message }, { status: 500 });
 

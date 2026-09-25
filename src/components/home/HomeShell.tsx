@@ -74,6 +74,7 @@ export function HomeShell({
 }) {
   const [modal, setModal] = useState<ModalState>(null);
   const [limitUnlockAt, setLimitUnlockAt] = useState<string | null>(null);
+  const [limitKind, setLimitKind] = useState<"message" | "document" | "email">("message");
   const [collapsed, setCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [temporaryChat, setTemporaryChat] = useState(false);
@@ -241,6 +242,11 @@ export function HomeShell({
         onOpenSearch={() => setModal("search")}
         onOpenNewProject={() => setModal("newProject")}
         onDeleteProject={setProjectToDelete}
+        onProjectFilesChanged={() => router.refresh()}
+        onUploadLimit={(unlockAt) => {
+          setLimitKind("document");
+          setLimitUnlockAt(unlockAt);
+        }}
         onOpenSettings={() => setModal("settings")}
         onOpenBilling={() => router.push("/pricing")}
         onOpenLogout={() => setModal("logout")}
@@ -298,7 +304,10 @@ export function HomeShell({
           projectId={pendingProjectId}
           isLoggedIn={isLoggedIn}
           isPaid={isPaid}
-          onLimitReached={setLimitUnlockAt}
+          onLimitReached={(unlockAt: string) => {
+            setLimitKind("message");
+            setLimitUnlockAt(unlockAt);
+          }}
           onSessionCreated={handleSessionCreated}
           onEmailResponse={
             isLoggedIn
@@ -407,6 +416,7 @@ export function HomeShell({
       {limitUnlockAt && (
         <UsageLimitModal
           unlockAt={limitUnlockAt}
+          kind={limitKind}
           isLoggedIn={isLoggedIn}
           onClose={() => setLimitUnlockAt(null)}
           onCreateAccount={() => {

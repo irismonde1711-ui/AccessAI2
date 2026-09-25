@@ -6,11 +6,19 @@ export type SidebarSession = {
   is_pinned: boolean;
 };
 
+export type SidebarFile = {
+  id: string;
+  filename: string;
+  category: "evidence" | "material";
+};
+
 export type SidebarProject = {
   id: string;
   name: string;
   color: string;
   sessions: SidebarSession[];
+  evidence: SidebarFile[];
+  materials: SidebarFile[];
 };
 
 export type SidebarDraft = {
@@ -33,7 +41,7 @@ export async function getSidebarData(
   supabase: SupabaseClient<any, any, any>,
   userId: string,
 ): Promise<SidebarData> {
-  const [sessionsRes, projectsRes, projectSessionsRes, draftsRes] = await Promise.all([
+  const [sessionsRes, projectsRes, projectSessionsRes, draftsRes, filesRes] = await Promise.all([
     supabase
       .from("chat_sessions")
       .select("id, title, is_pinned, is_temporary")
@@ -54,12 +62,18 @@ export async function getSidebarData(
       .eq("user_id", userId)
       .order("updated_at", { ascending: false })
       .limit(10),
+    supabase
+      .from("project_files")
+      .select("id, project_id, filename, category")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false }),
   ]);
 
   const sessions = sessionsRes.data ?? [];
   const projects = projectsRes.data ?? [];
   const projectSessions = projectSessionsRes.data ?? [];
   const drafts = draftsRes.data ?? [];
+  const files = filesRes.data ?? [];
 
   if (sessionsRes.error) return EMPTY;
 
@@ -77,6 +91,12 @@ export async function getSidebarData(
       .map((ps) => sessionById.get(ps.session_id))
       .filter((s): s is NonNullable<typeof s> => Boolean(s))
       .map((s) => ({ id: s.id, title: s.title, is_pinned: s.is_pinned })),
+    evidence: files
+      .filter((f) => f.project_id === p.id && f.category === "evidence")
+      .map((f) => ({ id: f.id, filename: f.filename, category: "evidence" as const })),
+    materials: files
+      .filter((f) => f.project_id === p.id && f.category === "material")
+      .map((f) => ({ id: f.id, filename: f.filename, category: "material" as const })),
   }));
 
   const recent = sessions
