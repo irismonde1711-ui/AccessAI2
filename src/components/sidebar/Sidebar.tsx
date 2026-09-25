@@ -62,7 +62,7 @@ export function Sidebar({
   onToggleTemporary: () => void;
   onOpenSearch: () => void;
   onOpenNewProject: () => void;
-  onDeleteProject: (project: { id: string; name: string }) => void;
+  onDeleteProject: (project: { id: string; name: string; sessionCount: number }) => void;
   onOpenSettings: () => void;
   onOpenBilling: () => void;
   onOpenLogout: () => void;
@@ -291,7 +291,13 @@ export function Sidebar({
                       />
                     </button>
                     <button
-                      onClick={() => onDeleteProject(project)}
+                      onClick={() =>
+                        onDeleteProject({
+                          id: project.id,
+                          name: project.name,
+                          sessionCount: project.sessions.length,
+                        })
+                      }
                       aria-label={`Delete ${project.name}`}
                       className="shrink-0 text-white/40 opacity-0 transition hover:text-red-300 group-hover:opacity-100"
                     >

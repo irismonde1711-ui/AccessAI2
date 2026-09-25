@@ -87,7 +87,7 @@ export function HomeShell({
   const [emailRecipient, setEmailRecipient] = useState("");
   const [pendingProjectId, setPendingProjectId] = useState<string | null>(null);
   const [paidUntil, setPaidUntil] = useState<string | null>(null);
-  const [projectToDelete, setProjectToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [projectToDelete, setProjectToDelete] = useState<{ id: string; name: string; sessionCount: number } | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const isMobile = useIsMobile();
