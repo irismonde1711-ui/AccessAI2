@@ -12,6 +12,7 @@ import { SettingsModal } from "@/components/modals/SettingsModal";
 import { LogoutConfirmModal } from "@/components/modals/LogoutConfirmModal";
 import { NewProjectModal } from "@/components/modals/NewProjectModal";
 import { DeleteProjectModal } from "@/components/modals/DeleteProjectModal";
+import { DeleteChatModal } from "@/components/modals/DeleteChatModal";
 import { SearchConversationsModal } from "@/components/modals/SearchConversationsModal";
 import { EmailComposerModal } from "@/components/modals/EmailComposerModal";
 import { SubscribePromptModal } from "@/components/modals/SubscribePromptModal";
@@ -94,6 +95,9 @@ export function HomeShell({
     sessionCount: number;
     fileCount: number;
   } | null>(null);
+  const [sessionToDelete, setSessionToDelete] = useState<{ id: string; title: string } | null>(
+    null,
+  );
   const router = useRouter();
   const searchParams = useSearchParams();
   const isMobile = useIsMobile();
@@ -247,6 +251,7 @@ export function HomeShell({
         onOpenSearch={() => setModal("search")}
         onOpenNewProject={() => setModal("newProject")}
         onDeleteProject={setProjectToDelete}
+        onDeleteSession={setSessionToDelete}
         onProjectFilesChanged={() => router.refresh()}
         onUploadLimit={(unlockAt) => {
           setLimitKind("document");
@@ -365,6 +370,19 @@ export function HomeShell({
           onClose={() => setModal(null)}
           onCreated={() => {
             setModal(null);
+            router.refresh();
+          }}
+        />
+      )}
+      {sessionToDelete && (
+        <DeleteChatModal
+          session={sessionToDelete}
+          onClose={() => setSessionToDelete(null)}
+          onDeleted={() => {
+            // The open conversation may be the one that just went, so drop the
+            // messages on screen rather than leaving a ghost behind.
+            if (activeSessionId === sessionToDelete.id) clearConversationState();
+            setSessionToDelete(null);
             router.refresh();
           }}
         />

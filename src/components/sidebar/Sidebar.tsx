@@ -39,6 +39,7 @@ export function Sidebar({
   onOpenSearch,
   onOpenNewProject,
   onDeleteProject,
+  onDeleteSession,
   onProjectFilesChanged,
   onUploadLimit,
   onOpenSettings,
@@ -71,6 +72,7 @@ export function Sidebar({
     sessionCount: number;
     fileCount: number;
   }) => void;
+  onDeleteSession: (session: { id: string; title: string }) => void;
   onProjectFilesChanged: () => void;
   onUploadLimit: (unlockAt: string) => void;
   onOpenSettings: () => void;
@@ -265,6 +267,7 @@ export function Sidebar({
                       active={s.id === activeSessionId}
                       onSelect={selectSession}
                       onTogglePin={onTogglePin}
+                      onDelete={onDeleteSession}
                       pinLabel="Unpin"
                     />
                   ))}
@@ -324,6 +327,7 @@ export function Sidebar({
                           active={s.id === activeSessionId}
                           onSelect={selectSession}
                           onTogglePin={onTogglePin}
+                          onDelete={onDeleteSession}
                           pinLabel={s.is_pinned ? "Unpin" : "Pin chat"}
                         />
                       ))}
@@ -404,6 +408,7 @@ export function Sidebar({
                       active={s.id === activeSessionId}
                       onSelect={selectSession}
                       onTogglePin={onTogglePin}
+                      onDelete={onDeleteSession}
                       pinLabel="Pin chat"
                     />
                   ))}
@@ -489,12 +494,14 @@ function SessionRow({
   active,
   onSelect,
   onTogglePin,
+  onDelete,
   pinLabel,
 }: {
   session: { id: string; title: string; is_pinned: boolean };
   active: boolean;
   onSelect: (id: string) => void;
   onTogglePin: (id: string, pinned: boolean) => void;
+  onDelete: (session: { id: string; title: string }) => void;
   pinLabel: string;
 }) {
   return (
@@ -515,6 +522,13 @@ function SessionRow({
         className={`shrink-0 text-white/40 hover:text-white ${session.is_pinned ? "" : "opacity-0 group-hover:opacity-100"}`}
       >
         <PinIcon size={13} filled={session.is_pinned} />
+      </button>
+      <button
+        onClick={() => onDelete({ id: session.id, title: session.title })}
+        aria-label={`Delete ${session.title}`}
+        className="shrink-0 text-white/40 opacity-0 transition hover:text-red-300 group-hover:opacity-100"
+      >
+        <TrashIcon size={12} />
       </button>
     </div>
   );
