@@ -98,7 +98,7 @@ export function DeleteProjectModal({
             {loading === "folder" ? "Removing…" : "Remove the folder only"}
           </span>
           <span className="mt-1 block text-[13px] leading-relaxed text-muted-grey dark:text-white/55">
-            Nothing is lost: the conversations move back to Recent, and anything filed under
+            Nothing is lost: the chats move back to Conversations, and anything filed under
             Evidence or Materials moves to Recent files.
           </span>
         </button>

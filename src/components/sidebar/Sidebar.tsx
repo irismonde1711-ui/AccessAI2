@@ -399,7 +399,7 @@ export function Sidebar({
 
             {data.recent.length > 0 && (
               <>
-                <SectionLabel>Recent</SectionLabel>
+                <SectionLabel>Conversations</SectionLabel>
                 <div className="px-2">
                   {data.recent.map((s) => (
                     <SessionRow
