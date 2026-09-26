@@ -205,8 +205,9 @@ function FileSection({
         files.map((file) => (
           <div
             key={file.id}
-            className="group/file flex items-center gap-1 rounded-lg px-2 py-1 hover:bg-white/5"
+            className="group/file flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-white/5"
           >
+            <span className="w-3.5 shrink-0" aria-hidden />
             <button
               onClick={() => onOpen(file.id)}
               disabled={deletingId === file.id}
@@ -249,11 +250,9 @@ export function UnfiledFiles({
       {files.map((file) => (
         <div
           key={file.id}
-          className="group/file flex items-center gap-1 rounded-lg px-2 py-1.5 hover:bg-white/5"
+          className="group/file flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-white/5"
         >
-          <span className="shrink-0 text-[9.5px] uppercase tracking-wide text-white/30">
-            {file.category === "evidence" ? "EV" : "MA"}
-          </span>
+          <span className="w-3.5 shrink-0" aria-hidden />
           <button
             onClick={async () => {
               if (!(await openProjectFile(file.id))) setError("Couldn't open that file.");
@@ -264,6 +263,9 @@ export function UnfiledFiles({
           >
             {file.filename}
           </button>
+          <span className="shrink-0 text-[9.5px] uppercase tracking-wide text-white/25">
+            {file.category === "evidence" ? "EV" : "MA"}
+          </span>
           <button
             onClick={async () => {
               setError(null);

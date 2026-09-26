@@ -250,13 +250,13 @@ export function Sidebar({
 
         {!isLoggedIn ? (
           <>
-            <SectionLabel>Explore</SectionLabel>
+            <SectionHeader>Explore</SectionHeader>
             <div className="px-2">
               {EXPLORE_PROMPTS.map((prompt) => (
                 <button
                   key={prompt}
                   onClick={() => examplePrompt(prompt)}
-                  className="block w-full truncate rounded-lg px-2 py-1.5 text-left text-sm text-white/70 hover:bg-white/5 hover:text-white"
+                  className="block w-full truncate rounded-lg px-2 py-1.5 pl-[38px] -indent-[22px] text-left text-sm text-white/70 hover:bg-white/5 hover:text-white"
                 >
                   {prompt}
                 </button>
@@ -267,7 +267,7 @@ export function Sidebar({
           <>
             {data.pinned.length > 0 && (
               <>
-                <SectionLabel>Pinned</SectionLabel>
+                <SectionHeader>Pinned</SectionHeader>
                 <div className="px-2">
                   {data.pinned.map((s) => (
                     <SessionRow
@@ -284,16 +284,19 @@ export function Sidebar({
               </>
             )}
 
-            <div className="mt-4 flex items-center justify-between px-4">
-              <SectionLabel noMargin>Projects</SectionLabel>
-              <button
-                onClick={onOpenNewProject}
-                className="text-white/50 hover:text-white"
-                aria-label="New project"
-              >
-                <PlusIcon size={15} />
-              </button>
-            </div>
+            <SectionHeader
+              action={
+                <button
+                  onClick={onOpenNewProject}
+                  className="text-white/50 hover:text-white"
+                  aria-label="New project"
+                >
+                  <PlusIcon size={15} />
+                </button>
+              }
+            >
+              Projects
+            </SectionHeader>
             <div className="px-2">
               {data.projects.map((project) => (
                 <div key={project.id}>
@@ -302,10 +305,12 @@ export function Sidebar({
                       onClick={() => toggleProject(project.id)}
                       className="flex min-w-0 flex-1 items-center gap-2 text-left text-sm text-white/85"
                     >
-                      <span
-                        className="h-2 w-2 shrink-0 rounded-full"
-                        style={{ backgroundColor: project.color }}
-                      />
+                      <span className="flex w-3.5 shrink-0 justify-center">
+                        <span
+                          className="h-2 w-2 rounded-full"
+                          style={{ backgroundColor: project.color }}
+                        />
+                      </span>
                       <span className="flex-1 truncate">{project.name}</span>
                       <ChevronIcon
                         size={12}
@@ -361,24 +366,19 @@ export function Sidebar({
 
             {data.bin.length > 0 && (
               <>
-                <div className="flex items-center justify-between px-2 pb-1.5 pt-4">
-                  <span className="text-[10.5px] font-medium uppercase tracking-[0.13em] text-white/40">
-                    Bin
-                  </span>
-                  <span className="rounded-full bg-white/[0.07] px-[7px] py-0.5 text-[10.5px] text-white/30">
-                    {data.bin.length}
-                  </span>
-                </div>
+                <SectionHeader count={data.bin.length}>Bin</SectionHeader>
                 <div className="px-2">
                   {data.bin.map((project) => (
                     <div
                       key={project.id}
-                      className="group/bin flex items-center gap-1 rounded-lg px-2 py-1.5 hover:bg-white/5"
+                      className="group/bin flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-white/5"
                     >
-                      <span
-                        className="h-2 w-2 shrink-0 rounded-full opacity-40"
-                        style={{ backgroundColor: project.color }}
-                      />
+                      <span className="flex w-3.5 shrink-0 justify-center">
+                        <span
+                          className="h-2 w-2 rounded-full opacity-40"
+                          style={{ backgroundColor: project.color }}
+                        />
+                      </span>
                       <span className="min-w-0 flex-1 truncate text-[12.5px] text-white/45 line-through">
                         {project.name}
                       </span>
@@ -404,40 +404,24 @@ export function Sidebar({
 
             {data.unfiledFiles.length > 0 && (
               <>
-                <div className="flex items-center justify-between px-2 pb-1.5 pt-4">
-                  <span className="text-[10.5px] font-medium uppercase tracking-[0.13em] text-white/40">
-                    Recent files
-                  </span>
-                  <span className="rounded-full bg-white/[0.07] px-[7px] py-0.5 text-[10.5px] text-white/30">
-                    {data.unfiledFiles.length}
-                  </span>
-                </div>
+                <SectionHeader count={data.unfiledFiles.length}>Recent files</SectionHeader>
                 <UnfiledFiles files={data.unfiledFiles} onChanged={onProjectFilesChanged} />
               </>
             )}
 
             {data.drafts.length > 0 && (
               <>
-                <div className="flex items-center justify-between px-2 pb-1.5 pt-4">
-                  <span className="text-[10.5px] font-medium uppercase tracking-[0.13em] text-white/40">
-                    Drafts
-                  </span>
-                  <span className="rounded-full bg-white/[0.07] px-[7px] py-0.5 text-[10.5px] text-white/30">
-                    {data.drafts.length}
-                  </span>
-                </div>
+                <SectionHeader count={data.drafts.length}>Drafts</SectionHeader>
                 <div className="px-2">
                   {data.drafts.map((d) => (
                     <button
                       key={d.id}
                       onClick={() => onOpenDraft?.(d.id)}
-                      className="flex w-full items-center gap-[9px] truncate rounded-[10px] px-2.5 py-2 text-left text-[12.5px] text-white/70 transition hover:bg-white/[0.06] hover:text-white"
+                      className="flex w-full items-center gap-2 truncate rounded-[10px] px-2 py-1.5 text-left text-[12.5px] text-white/70 transition hover:bg-white/[0.06] hover:text-white"
                     >
                       <span
-                        className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-md text-[10px] ${
-                          d.type === "email"
-                            ? "bg-teal/15 text-[#7fe0d2]"
-                            : "bg-white/[0.08] text-white/60"
+                        className={`flex w-3.5 flex-shrink-0 items-center justify-center text-[10px] ${
+                          d.type === "email" ? "text-[#7fe0d2]" : "text-white/45"
                         }`}
                       >
                         {d.type === "email" ? "✉" : "◆"}
@@ -451,7 +435,7 @@ export function Sidebar({
 
             {data.recent.length > 0 && (
               <>
-                <SectionLabel>Conversations</SectionLabel>
+                <SectionHeader>Conversations</SectionHeader>
                 <div className="px-2">
                   {data.recent.map((s) => (
                     <SessionRow
@@ -533,11 +517,25 @@ export function Sidebar({
   );
 }
 
-function SectionLabel({ children, noMargin }: { children: React.ReactNode; noMargin?: boolean }) {
+function SectionHeader({
+  children,
+  count,
+  action,
+}: {
+  children: React.ReactNode;
+  count?: number;
+  action?: React.ReactNode;
+}) {
   return (
-    <p className={`px-4 ${noMargin ? "" : "mt-4"} pb-1 text-xs font-semibold uppercase tracking-wide text-white/35`}>
-      {children}
-    </p>
+    <div className="mt-4 flex items-center justify-between px-4 pb-1">
+      <p className="text-xs font-semibold uppercase tracking-wide text-white/35">{children}</p>
+      {count !== undefined && (
+        <span className="rounded-full bg-white/[0.07] px-[7px] py-0.5 text-[10.5px] text-white/30">
+          {count}
+        </span>
+      )}
+      {action}
+    </div>
   );
 }
 
@@ -558,10 +556,11 @@ function SessionRow({
 }) {
   return (
     <div
-      className={`group flex items-center gap-1 rounded-lg px-2 py-1.5 ${
+      className={`group flex items-center gap-2 rounded-lg px-2 py-1.5 ${
         active ? "bg-white/10" : "hover:bg-white/5"
       }`}
     >
+      <span className="w-3.5 shrink-0" aria-hidden />
       <button
         onClick={() => onSelect(session.id)}
         className="min-w-0 flex-1 truncate text-left text-sm text-white/85"
