@@ -14,7 +14,7 @@ import {
   ChevronIcon,
   CloseIcon,
   ClockIcon, TrashIcon } from "@/components/ui/Icons";
-import { ProjectLibrary } from "@/components/sidebar/ProjectLibrary";
+import { ProjectLibrary, UnfiledFiles } from "@/components/sidebar/ProjectLibrary";
 import type { SidebarData } from "@/lib/data/sidebar";
 
 const EXPLORE_PROMPTS = [
@@ -65,7 +65,12 @@ export function Sidebar({
   onToggleTemporary: () => void;
   onOpenSearch: () => void;
   onOpenNewProject: () => void;
-  onDeleteProject: (project: { id: string; name: string; sessionCount: number }) => void;
+  onDeleteProject: (project: {
+    id: string;
+    name: string;
+    sessionCount: number;
+    fileCount: number;
+  }) => void;
   onProjectFilesChanged: () => void;
   onUploadLimit: (unlockAt: string) => void;
   onOpenSettings: () => void;
@@ -301,6 +306,7 @@ export function Sidebar({
                           id: project.id,
                           name: project.name,
                           sessionCount: project.sessions.length,
+                          fileCount: project.evidence.length + project.materials.length,
                         })
                       }
                       aria-label={`Delete ${project.name}`}
@@ -339,6 +345,20 @@ export function Sidebar({
                 </div>
               ))}
             </div>
+
+            {data.unfiledFiles.length > 0 && (
+              <>
+                <div className="flex items-center justify-between px-2 pb-1.5 pt-4">
+                  <span className="text-[10.5px] font-medium uppercase tracking-[0.13em] text-white/40">
+                    Recent files
+                  </span>
+                  <span className="rounded-full bg-white/[0.07] px-[7px] py-0.5 text-[10.5px] text-white/30">
+                    {data.unfiledFiles.length}
+                  </span>
+                </div>
+                <UnfiledFiles files={data.unfiledFiles} onChanged={onProjectFilesChanged} />
+              </>
+            )}
 
             {data.drafts.length > 0 && (
               <>

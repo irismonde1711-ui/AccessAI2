@@ -3,7 +3,13 @@ import { HomeShell } from "@/components/home/HomeShell";
 import { getSidebarData, type SidebarData } from "@/lib/data/sidebar";
 import { hasActiveSubscription } from "@/lib/data/subscription";
 
-const EMPTY_SIDEBAR: SidebarData = { pinned: [], projects: [], drafts: [], recent: [] };
+const EMPTY_SIDEBAR: SidebarData = {
+  pinned: [],
+  projects: [],
+  drafts: [],
+  recent: [],
+  unfiledFiles: [],
+};
 
 export default async function Home() {
   const supabase = await createClient();

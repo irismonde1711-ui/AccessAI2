@@ -32,9 +32,11 @@ export type SidebarData = {
   projects: SidebarProject[];
   drafts: SidebarDraft[];
   recent: SidebarSession[];
+  // Files whose project was removed: kept, and shown until they are deleted.
+  unfiledFiles: SidebarFile[];
 };
 
-const EMPTY: SidebarData = { pinned: [], projects: [], drafts: [], recent: [] };
+const EMPTY: SidebarData = { pinned: [], projects: [], drafts: [], recent: [], unfiledFiles: [] };
 
 export async function getSidebarData(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -109,5 +111,12 @@ export async function getSidebarData(
     projects: projectList,
     drafts: drafts.map((d) => ({ id: d.id, title: d.title, type: d.type })),
     recent,
+    unfiledFiles: files
+      .filter((f) => f.project_id === null)
+      .map((f) => ({
+        id: f.id,
+        filename: f.filename,
+        category: f.category as "evidence" | "material",
+      })),
   };
 }

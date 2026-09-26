@@ -11,7 +11,7 @@ export function DeleteProjectModal({
   onClose,
   onDeleted,
 }: {
-  project: { id: string; name: string; sessionCount: number };
+  project: { id: string; name: string; sessionCount: number; fileCount: number };
   onClose: () => void;
   onDeleted: () => void;
 }) {
@@ -19,8 +19,12 @@ export function DeleteProjectModal({
   const [loading, setLoading] = useState<"folder" | "purge" | null>(null);
   const [confirmingPurge, setConfirmingPurge] = useState(false);
 
-  const { sessionCount } = project;
+  const { sessionCount, fileCount } = project;
   const chats = `${sessionCount} ${sessionCount === 1 ? "conversation" : "conversations"}`;
+  const docs = `${fileCount} ${fileCount === 1 ? "file" : "files"}`;
+  const holdings = [sessionCount > 0 ? chats : null, fileCount > 0 ? docs : null]
+    .filter(Boolean)
+    .join(" and ");
 
   async function handleDelete(purge: boolean) {
     setError(null);
@@ -46,9 +50,8 @@ export function DeleteProjectModal({
           Permanently delete “{project.name}”?
         </h2>
         <p className="mt-3 text-sm leading-relaxed text-muted-grey dark:text-white/60">
-          This deletes the project along with {sessionCount > 0 ? chats : "its contents"}, every
-          message inside, and every file filed under Evidence or Materials. It cannot be
-          undone.
+          This erases the project and {holdings || "its contents"} — every message and every
+          uploaded document with it. It cannot be undone.
         </p>
 
         {error && <p className="mt-4 text-sm text-red-500">{error}</p>}
@@ -78,8 +81,8 @@ export function DeleteProjectModal({
         Delete “{project.name}”?
       </h2>
       <p className="mt-3 text-sm leading-relaxed text-muted-grey dark:text-white/60">
-        {sessionCount > 0
-          ? `This project holds ${chats}. Choose what happens next.`
+        {holdings
+          ? `This project holds ${holdings}. Choose what happens next.`
           : "This project is empty."}
       </p>
 
@@ -95,8 +98,8 @@ export function DeleteProjectModal({
             {loading === "folder" ? "Removing…" : "Remove the folder only"}
           </span>
           <span className="mt-1 block text-[13px] leading-relaxed text-muted-grey dark:text-white/55">
-            The conversations are kept and move back to Recent. Anything filed under Evidence
-            or Materials is removed with the project.
+            Nothing is lost: the conversations move back to Recent, and anything filed under
+            Evidence or Materials moves to Recent files.
           </span>
         </button>
 

@@ -74,16 +74,19 @@ export async function DELETE(request: Request) {
     }
   }
 
-  // Evidence and materials belong to the project either way — the rows cascade
-  // with it, so their storage objects have to be cleared here or they are
-  // orphaned in the bucket forever.
-  const { data: libraryFiles } = await supabase
-    .from("project_files")
-    .select("storage_path")
-    .eq("project_id", id);
-  const libraryPaths = (libraryFiles ?? []).map((f) => f.storage_path).filter(Boolean);
-  if (libraryPaths.length > 0) {
-    await supabase.storage.from("chat-attachments").remove(libraryPaths);
+  // Only a permanent delete destroys the paperwork. Left alone, the files lose
+  // their project (the foreign key sets it to null) and wait under Recent
+  // files, the same way the conversations wait under Recent.
+  if (purge) {
+    const { data: libraryFiles } = await supabase
+      .from("project_files")
+      .select("id, storage_path")
+      .eq("project_id", id);
+    const libraryPaths = (libraryFiles ?? []).map((f) => f.storage_path).filter(Boolean);
+    if (libraryPaths.length > 0) {
+      await supabase.storage.from("chat-attachments").remove(libraryPaths);
+      await supabase.from("project_files").delete().eq("project_id", id);
+    }
   }
 
   const { error } = await supabase.from("projects").delete().eq("id", id).eq("user_id", user.id);

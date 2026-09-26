@@ -10,6 +10,23 @@ const MAX_FILE_BYTES = 10 * 1024 * 1024;
 // A project's paperwork: evidence on one side, reference material on the
 // other. These are stored, not read by the assistant — filing a document here
 // never sends it to the model.
+// Shared by a project's own sections and by the Recent files list, so a file
+// behaves the same wherever it is shown.
+export async function openProjectFile(id: string): Promise<boolean> {
+  const res = await fetch(`/api/projects/files?id=${encodeURIComponent(id)}`);
+  if (!res.ok) return false;
+  const { url } = await res.json();
+  window.open(url, "_blank", "noopener,noreferrer");
+  return true;
+}
+
+export async function deleteProjectFile(id: string): Promise<boolean> {
+  const res = await fetch(`/api/projects/files?id=${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
+  return res.ok;
+}
+
 export function ProjectLibrary({
   projectId,
   evidence,
@@ -81,10 +98,7 @@ export function ProjectLibrary({
 
   async function remove(id: string) {
     setError(null);
-    const res = await fetch(`/api/projects/files?id=${encodeURIComponent(id)}`, {
-      method: "DELETE",
-    });
-    if (!res.ok) {
+    if (!(await deleteProjectFile(id))) {
       setError("Couldn't delete that file.");
       return;
     }
@@ -92,13 +106,7 @@ export function ProjectLibrary({
   }
 
   async function open(id: string) {
-    const res = await fetch(`/api/projects/files?id=${encodeURIComponent(id)}`);
-    if (!res.ok) {
-      setError("Couldn't open that file.");
-      return;
-    }
-    const { url } = await res.json();
-    window.open(url, "_blank", "noopener,noreferrer");
+    if (!(await openProjectFile(id))) setError("Couldn't open that file.");
   }
 
   return (
@@ -194,6 +202,53 @@ function FileSection({
           </div>
         ))
       )}
+    </div>
+  );
+}
+
+// What is left when a project folder is removed: the files survive, listed on
+// their own until they are opened, deleted, or the account is done with them.
+export function UnfiledFiles({
+  files,
+  onChanged,
+}: {
+  files: SidebarFile[];
+  onChanged: () => void;
+}) {
+  const [error, setError] = useState<string | null>(null);
+
+  return (
+    <div className="px-2">
+      {files.map((file) => (
+        <div
+          key={file.id}
+          className="group/file flex items-center gap-1 rounded-lg px-2 py-1.5 hover:bg-white/5"
+        >
+          <span className="shrink-0 text-[9.5px] uppercase tracking-wide text-white/30">
+            {file.category === "evidence" ? "EV" : "MA"}
+          </span>
+          <button
+            onClick={async () => {
+              if (!(await openProjectFile(file.id))) setError("Couldn't open that file.");
+            }}
+            className="min-w-0 flex-1 truncate text-left text-[12.5px] text-white/70"
+            title={file.filename}
+          >
+            {file.filename}
+          </button>
+          <button
+            onClick={async () => {
+              if (await deleteProjectFile(file.id)) onChanged();
+              else setError("Couldn't delete that file.");
+            }}
+            aria-label={`Delete ${file.filename}`}
+            className="shrink-0 text-white/35 opacity-0 transition hover:text-red-300 group-hover/file:opacity-100"
+          >
+            <TrashIcon size={12} />
+          </button>
+        </div>
+      ))}
+      {error && <p className="px-2 pb-1 text-[11px] text-red-300">{error}</p>}
     </div>
   );
 }
