@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { PlusIcon, TrashIcon } from "@/components/ui/Icons";
+import { PlusIcon, SpinnerIcon, TrashIcon } from "@/components/ui/Icons";
 import type { SidebarFile } from "@/lib/data/sidebar";
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
@@ -41,7 +41,11 @@ export function ProjectLibrary({
   onUploadLimit: (unlockAt: string) => void;
 }) {
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  // The file currently going up, kept with its section so the list can show it
+  // arriving. One upload at a time keeps the allowance honest.
+  const [uploading, setUploading] = useState<{ category: string; name: string } | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const busy = uploading !== null || deletingId !== null;
 
   async function upload(file: File, category: "evidence" | "material") {
     setError(null);
@@ -51,7 +55,7 @@ export function ProjectLibrary({
       return;
     }
 
-    setBusy(true);
+    setUploading({ category, name: file.name });
     try {
       const supabase = createClient();
       const {
@@ -92,13 +96,16 @@ export function ProjectLibrary({
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed.");
     } finally {
-      setBusy(false);
+      setUploading(null);
     }
   }
 
   async function remove(id: string) {
     setError(null);
-    if (!(await deleteProjectFile(id))) {
+    setDeletingId(id);
+    const ok = await deleteProjectFile(id);
+    setDeletingId(null);
+    if (!ok) {
       setError("Couldn't delete that file.");
       return;
     }
@@ -115,6 +122,8 @@ export function ProjectLibrary({
         label="Evidence"
         files={evidence}
         busy={busy}
+        uploadingName={uploading?.category === "evidence" ? uploading.name : null}
+        deletingId={deletingId}
         onUpload={(f) => upload(f, "evidence")}
         onOpen={open}
         onRemove={remove}
@@ -123,6 +132,8 @@ export function ProjectLibrary({
         label="Materials"
         files={materials}
         busy={busy}
+        uploadingName={uploading?.category === "material" ? uploading.name : null}
+        deletingId={deletingId}
         onUpload={(f) => upload(f, "material")}
         onOpen={open}
         onRemove={remove}
@@ -136,6 +147,8 @@ function FileSection({
   label,
   files,
   busy,
+  uploadingName,
+  deletingId,
   onUpload,
   onOpen,
   onRemove,
@@ -143,6 +156,8 @@ function FileSection({
   label: string;
   files: SidebarFile[];
   busy: boolean;
+  uploadingName: string | null;
+  deletingId: string | null;
   onUpload: (file: File) => void;
   onOpen: (id: string) => void;
   onRemove: (id: string) => void;
@@ -160,9 +175,9 @@ function FileSection({
           onClick={() => inputRef.current?.click()}
           disabled={busy}
           aria-label={`Add ${label.toLowerCase()}`}
-          className="text-white/40 transition hover:text-white disabled:opacity-40"
+          className="text-white/40 transition hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
         >
-          <PlusIcon size={13} />
+          {uploadingName ? <SpinnerIcon size={13} /> : <PlusIcon size={13} />}
         </button>
       </div>
 
@@ -177,7 +192,14 @@ function FileSection({
         }}
       />
 
-      {files.length === 0 ? (
+      {uploadingName && (
+        <div className="flex items-center gap-1.5 px-2 py-1 text-[12.5px] text-white/45">
+          <SpinnerIcon size={12} />
+          <span className="min-w-0 flex-1 truncate">Uploading {uploadingName}…</span>
+        </div>
+      )}
+
+      {files.length === 0 && !uploadingName ? (
         <p className="px-2 pb-0.5 text-[11px] text-white/25">Nothing filed yet</p>
       ) : (
         files.map((file) => (
@@ -187,17 +209,21 @@ function FileSection({
           >
             <button
               onClick={() => onOpen(file.id)}
-              className="min-w-0 flex-1 truncate text-left text-[12.5px] text-white/70"
+              disabled={deletingId === file.id}
+              className="min-w-0 flex-1 truncate text-left text-[12.5px] text-white/70 disabled:opacity-40"
               title={file.filename}
             >
               {file.filename}
             </button>
             <button
               onClick={() => onRemove(file.id)}
+              disabled={busy}
               aria-label={`Delete ${file.filename}`}
-              className="shrink-0 text-white/35 opacity-0 transition hover:text-red-300 group-hover/file:opacity-100"
+              className={`shrink-0 text-white/35 transition hover:text-red-300 disabled:cursor-not-allowed disabled:hover:text-white/35 ${
+                deletingId === file.id ? "opacity-100" : "opacity-0 group-hover/file:opacity-100"
+              }`}
             >
-              <TrashIcon size={12} />
+              {deletingId === file.id ? <SpinnerIcon size={12} /> : <TrashIcon size={12} />}
             </button>
           </div>
         ))
@@ -216,6 +242,7 @@ export function UnfiledFiles({
   onChanged: () => void;
 }) {
   const [error, setError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   return (
     <div className="px-2">
@@ -231,20 +258,28 @@ export function UnfiledFiles({
             onClick={async () => {
               if (!(await openProjectFile(file.id))) setError("Couldn't open that file.");
             }}
-            className="min-w-0 flex-1 truncate text-left text-[12.5px] text-white/70"
+            disabled={deletingId === file.id}
+            className="min-w-0 flex-1 truncate text-left text-[12.5px] text-white/70 disabled:opacity-40"
             title={file.filename}
           >
             {file.filename}
           </button>
           <button
             onClick={async () => {
-              if (await deleteProjectFile(file.id)) onChanged();
+              setError(null);
+              setDeletingId(file.id);
+              const ok = await deleteProjectFile(file.id);
+              setDeletingId(null);
+              if (ok) onChanged();
               else setError("Couldn't delete that file.");
             }}
+            disabled={deletingId !== null}
             aria-label={`Delete ${file.filename}`}
-            className="shrink-0 text-white/35 opacity-0 transition hover:text-red-300 group-hover/file:opacity-100"
+            className={`shrink-0 text-white/35 transition hover:text-red-300 disabled:cursor-not-allowed disabled:hover:text-white/35 ${
+              deletingId === file.id ? "opacity-100" : "opacity-0 group-hover/file:opacity-100"
+            }`}
           >
-            <TrashIcon size={12} />
+            {deletingId === file.id ? <SpinnerIcon size={12} /> : <TrashIcon size={12} />}
           </button>
         </div>
       ))}
