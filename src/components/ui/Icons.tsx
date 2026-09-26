@@ -171,3 +171,12 @@ export function SpinnerIcon({ size = 13, className }: IconProps) {
     </svg>
   );
 }
+
+export function RestoreIcon({ size = 14, className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M4 10a8 8 0 1 1 1.4 6" />
+      <path d="M3.5 4.5V10H9" />
+    </svg>
+  );
+}

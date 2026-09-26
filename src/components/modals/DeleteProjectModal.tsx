@@ -3,21 +3,28 @@
 import { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 
-// Two different intentions share one word. Tidying the sidebar keeps the work;
-// clearing out a matter destroys it. The modal makes the user pick, and the
-// permanent option asks a second time because nothing brings it back.
+// Two different intentions share one word. Clearing the sidebar is reversible
+// — the project waits in the bin with everything still in it — while clearing
+// out a matter is not, so that path asks a second time. A project already in
+// the bin only has the second choice left.
 export function DeleteProjectModal({
   project,
   onClose,
   onDeleted,
 }: {
-  project: { id: string; name: string; sessionCount: number; fileCount: number };
+  project: {
+    id: string;
+    name: string;
+    sessionCount: number;
+    fileCount: number;
+    permanentOnly?: boolean;
+  };
   onClose: () => void;
   onDeleted: () => void;
 }) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<"folder" | "purge" | null>(null);
-  const [confirmingPurge, setConfirmingPurge] = useState(false);
+  const [confirmingPurge, setConfirmingPurge] = useState(Boolean(project.permanentOnly));
 
   const { sessionCount, fileCount } = project;
   const chats = `${sessionCount} ${sessionCount === 1 ? "conversation" : "conversations"}`;
@@ -58,10 +65,11 @@ export function DeleteProjectModal({
 
         <div className="mt-6 flex gap-3">
           <button
-            onClick={() => setConfirmingPurge(false)}
-            className="flex-1 rounded-full border border-black/10 py-2.5 text-sm font-medium text-navy-deeper transition hover:bg-black/5 dark:border-white/15 dark:text-white dark:hover:bg-white/10"
+            onClick={() => (project.permanentOnly ? onClose() : setConfirmingPurge(false))}
+            disabled={loading !== null}
+            className="flex-1 rounded-full border border-black/10 py-2.5 text-sm font-medium text-navy-deeper transition hover:bg-black/5 disabled:opacity-60 dark:border-white/15 dark:text-white dark:hover:bg-white/10"
           >
-            Go back
+            {project.permanentOnly ? "Cancel" : "Go back"}
           </button>
           <button
             onClick={() => handleDelete(true)}
@@ -95,11 +103,11 @@ export function DeleteProjectModal({
           className="w-full rounded-2xl border border-black/10 p-4 text-left transition hover:bg-black/[0.03] disabled:opacity-60 dark:border-white/15 dark:hover:bg-white/5"
         >
           <span className="block text-sm font-semibold text-navy-deeper dark:text-white">
-            {loading === "folder" ? "Removing…" : "Remove the folder only"}
+            {loading === "folder" ? "Moving to bin…" : "Move to bin"}
           </span>
           <span className="mt-1 block text-[13px] leading-relaxed text-muted-grey dark:text-white/55">
-            Nothing is lost: the chats move back to Conversations, and anything filed under
-            Evidence or Materials moves to Recent files.
+            The project leaves the sidebar with its conversations and files still inside, and can
+            be restored from the bin at any time.
           </span>
         </button>
 
@@ -110,7 +118,7 @@ export function DeleteProjectModal({
         >
           <span className="block text-sm font-semibold text-red-500">Delete permanently</span>
           <span className="mt-1 block text-[13px] leading-relaxed text-muted-grey dark:text-white/55">
-            The project, its conversations, evidence and materials are erased.
+            The project, its conversations, evidence and materials are erased for good.
           </span>
         </button>
       </div>

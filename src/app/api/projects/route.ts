@@ -22,11 +22,35 @@ export async function POST(request: Request) {
   return Response.json({ project: data });
 }
 
-// Removing a project unfiles its chats by default: the project_sessions rows
-// cascade away with the project, so the conversations reappear under Recent.
+// Restores a binned project. Everything it held stayed attached while it sat
+// in the bin, so clearing the timestamp is the whole job.
+export async function PATCH(request: Request) {
+  const { id } = await request.json();
+  if (typeof id !== "string" || !id) {
+    return Response.json({ error: "id is required" }, { status: 400 });
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { error } = await supabase
+    .from("projects")
+    .update({ deleted_at: null })
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) return Response.json({ error: error.message }, { status: 500 });
+  return Response.json({ ok: true });
+}
+
+// Deleting a project moves it to the bin: it keeps its conversations and its
+// files, and waits there until it is restored or deleted for good.
 //
-// `purge=1` is the other half of that choice — the conversations, their
-// messages and any uploaded files go too, and none of it comes back.
+// `purge=1` is that second, final step — the project, its conversations, their
+// messages and every uploaded document, with nothing left to restore.
 export async function DELETE(request: Request) {
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
@@ -39,7 +63,17 @@ export async function DELETE(request: Request) {
   } = await supabase.auth.getUser();
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
-  if (purge) {
+  if (!purge) {
+    const { error: binError } = await supabase
+      .from("projects")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", id)
+      .eq("user_id", user.id);
+    if (binError) return Response.json({ error: binError.message }, { status: 500 });
+    return Response.json({ ok: true, binned: true });
+  }
+
+  {
     const { data: links } = await supabase
       .from("project_sessions")
       .select("session_id")
@@ -74,10 +108,9 @@ export async function DELETE(request: Request) {
     }
   }
 
-  // Only a permanent delete destroys the paperwork. Left alone, the files lose
-  // their project (the foreign key sets it to null) and wait under Recent
-  // files, the same way the conversations wait under Recent.
-  if (purge) {
+  // Evidence and materials go with it; the rows would survive the project
+  // otherwise, and the storage objects always would.
+  {
     const { data: libraryFiles } = await supabase
       .from("project_files")
       .select("id, storage_path")

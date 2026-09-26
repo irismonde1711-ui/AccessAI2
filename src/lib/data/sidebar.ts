@@ -27,6 +27,14 @@ export type SidebarDraft = {
   type: "ai_response" | "email";
 };
 
+export type SidebarBinnedProject = {
+  id: string;
+  name: string;
+  color: string;
+  sessionCount: number;
+  fileCount: number;
+};
+
 export type SidebarData = {
   pinned: SidebarSession[];
   projects: SidebarProject[];
@@ -34,9 +42,18 @@ export type SidebarData = {
   recent: SidebarSession[];
   // Files whose project was removed: kept, and shown until they are deleted.
   unfiledFiles: SidebarFile[];
+  // Deleted projects, intact and waiting to be restored or erased.
+  bin: SidebarBinnedProject[];
 };
 
-const EMPTY: SidebarData = { pinned: [], projects: [], drafts: [], recent: [], unfiledFiles: [] };
+const EMPTY: SidebarData = {
+  pinned: [],
+  projects: [],
+  drafts: [],
+  recent: [],
+  unfiledFiles: [],
+  bin: [],
+};
 
 export async function getSidebarData(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -52,7 +69,7 @@ export async function getSidebarData(
       .order("created_at", { ascending: false }),
     supabase
       .from("projects")
-      .select("id, name, color")
+      .select("id, name, color, deleted_at")
       .eq("user_id", userId)
       .order("created_at", { ascending: false }),
     supabase
@@ -84,7 +101,9 @@ export async function getSidebarData(
 
   const pinned = sessions.filter((s) => s.is_pinned);
 
-  const projectList: SidebarProject[] = projects.map((p) => ({
+  const projectList: SidebarProject[] = projects
+    .filter((p) => !p.deleted_at)
+    .map((p) => ({
     id: p.id,
     name: p.name,
     color: p.color,
@@ -99,7 +118,17 @@ export async function getSidebarData(
     materials: files
       .filter((f) => f.project_id === p.id && f.category === "material")
       .map((f) => ({ id: f.id, filename: f.filename, category: "material" as const })),
-  }));
+    }));
+
+  const bin: SidebarBinnedProject[] = projects
+    .filter((p) => Boolean(p.deleted_at))
+    .map((p) => ({
+      id: p.id,
+      name: p.name,
+      color: p.color,
+      sessionCount: projectSessions.filter((ps) => ps.project_id === p.id).length,
+      fileCount: files.filter((f) => f.project_id === p.id).length,
+    }));
 
   const recent = sessions
     .filter((s) => !s.is_pinned && !projectSessionIds.has(s.id))
@@ -118,5 +147,6 @@ export async function getSidebarData(
         filename: f.filename,
         category: f.category as "evidence" | "material",
       })),
+    bin,
   };
 }

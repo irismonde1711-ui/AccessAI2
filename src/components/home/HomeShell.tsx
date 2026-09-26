@@ -94,6 +94,9 @@ export function HomeShell({
     name: string;
     sessionCount: number;
     fileCount: number;
+    // Set when the project is already in the bin: there is no folder left to
+    // remove, only the final delete.
+    permanentOnly?: boolean;
   } | null>(null);
   const [sessionToDelete, setSessionToDelete] = useState<{ id: string; title: string } | null>(
     null,
@@ -251,6 +254,15 @@ export function HomeShell({
         onOpenSearch={() => setModal("search")}
         onOpenNewProject={() => setModal("newProject")}
         onDeleteProject={setProjectToDelete}
+        onPurgeProject={(project) => setProjectToDelete({ ...project, permanentOnly: true })}
+        onRestoreProject={async (id) => {
+          await fetch("/api/projects", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id }),
+          });
+          router.refresh();
+        }}
         onDeleteSession={setSessionToDelete}
         onProjectFilesChanged={() => router.refresh()}
         onUploadLimit={(unlockAt) => {

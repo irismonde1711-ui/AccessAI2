@@ -13,7 +13,7 @@ import {
   PlusIcon,
   ChevronIcon,
   CloseIcon,
-  ClockIcon, TrashIcon } from "@/components/ui/Icons";
+  ClockIcon, TrashIcon, RestoreIcon } from "@/components/ui/Icons";
 import { ProjectLibrary, UnfiledFiles } from "@/components/sidebar/ProjectLibrary";
 import type { SidebarData } from "@/lib/data/sidebar";
 
@@ -39,6 +39,8 @@ export function Sidebar({
   onOpenSearch,
   onOpenNewProject,
   onDeleteProject,
+  onPurgeProject,
+  onRestoreProject,
   onDeleteSession,
   onProjectFilesChanged,
   onUploadLimit,
@@ -72,6 +74,13 @@ export function Sidebar({
     sessionCount: number;
     fileCount: number;
   }) => void;
+  onPurgeProject: (project: {
+    id: string;
+    name: string;
+    sessionCount: number;
+    fileCount: number;
+  }) => void;
+  onRestoreProject: (id: string) => void;
   onDeleteSession: (session: { id: string; title: string }) => void;
   onProjectFilesChanged: () => void;
   onUploadLimit: (unlockAt: string) => void;
@@ -349,6 +358,49 @@ export function Sidebar({
                 </div>
               ))}
             </div>
+
+            {data.bin.length > 0 && (
+              <>
+                <div className="flex items-center justify-between px-2 pb-1.5 pt-4">
+                  <span className="text-[10.5px] font-medium uppercase tracking-[0.13em] text-white/40">
+                    Bin
+                  </span>
+                  <span className="rounded-full bg-white/[0.07] px-[7px] py-0.5 text-[10.5px] text-white/30">
+                    {data.bin.length}
+                  </span>
+                </div>
+                <div className="px-2">
+                  {data.bin.map((project) => (
+                    <div
+                      key={project.id}
+                      className="group/bin flex items-center gap-1 rounded-lg px-2 py-1.5 hover:bg-white/5"
+                    >
+                      <span
+                        className="h-2 w-2 shrink-0 rounded-full opacity-40"
+                        style={{ backgroundColor: project.color }}
+                      />
+                      <span className="min-w-0 flex-1 truncate text-[12.5px] text-white/45 line-through">
+                        {project.name}
+                      </span>
+                      <button
+                        onClick={() => onRestoreProject(project.id)}
+                        aria-label={`Restore ${project.name}`}
+                        className="shrink-0 text-white/40 opacity-0 transition hover:text-teal group-hover/bin:opacity-100"
+                      >
+                        <RestoreIcon size={13} />
+                      </button>
+                      <button
+                        onClick={() => onPurgeProject(project)}
+                        aria-label={`Delete ${project.name} permanently`}
+                        className="shrink-0 text-white/40 opacity-0 transition hover:text-red-300 group-hover/bin:opacity-100"
+                      >
+                        <TrashIcon size={12} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
 
             {data.unfiledFiles.length > 0 && (
               <>

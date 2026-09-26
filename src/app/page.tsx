@@ -9,6 +9,7 @@ const EMPTY_SIDEBAR: SidebarData = {
   drafts: [],
   recent: [],
   unfiledFiles: [],
+  bin: [],
 };
 
 export default async function Home() {
