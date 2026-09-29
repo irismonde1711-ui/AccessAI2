@@ -265,24 +265,24 @@ export function Sidebar({
           </>
         ) : (
           <>
-            {data.pinned.length > 0 && (
-              <>
-                <SectionHeader>Pinned</SectionHeader>
-                <div className="px-2">
-                  {data.pinned.map((s) => (
-                    <SessionRow
-                      key={s.id}
-                      session={s}
-                      active={s.id === activeSessionId}
-                      onSelect={selectSession}
-                      onTogglePin={onTogglePin}
-                      onDelete={onDeleteSession}
-                      pinLabel="Unpin"
-                    />
-                  ))}
-                </div>
-              </>
-            )}
+            <SectionHeader>Pinned</SectionHeader>
+            <div className="px-2">
+              {data.pinned.length === 0 ? (
+                <EmptyRow>Nothing pinned yet</EmptyRow>
+              ) : (
+                data.pinned.map((s) => (
+                  <SessionRow
+                    key={s.id}
+                    session={s}
+                    active={s.id === activeSessionId}
+                    onSelect={selectSession}
+                    onTogglePin={onTogglePin}
+                    onDelete={onDeleteSession}
+                    pinLabel="Unpin"
+                  />
+                ))
+              )}
+            </div>
 
             <SectionHeader
               action={
@@ -298,6 +298,7 @@ export function Sidebar({
               Projects
             </SectionHeader>
             <div className="px-2">
+              {data.projects.length === 0 && <EmptyRow>No projects yet</EmptyRow>}
               {data.projects.map((project) => (
                 <div key={project.id}>
                   <div className="group flex items-center gap-1 rounded-lg px-2 py-1.5 hover:bg-white/5">
@@ -364,11 +365,10 @@ export function Sidebar({
               ))}
             </div>
 
-            {data.bin.length > 0 && (
-              <>
-                <SectionHeader count={data.bin.length}>Bin</SectionHeader>
-                <div className="px-2">
-                  {data.bin.map((project) => (
+            <SectionHeader count={data.bin.length}>Bin</SectionHeader>
+            <div className="px-2">
+              {data.bin.length === 0 && <EmptyRow>Nothing deleted</EmptyRow>}
+              {data.bin.map((project) => (
                     <div
                       key={project.id}
                       className="group/bin flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-white/5"
@@ -397,60 +397,54 @@ export function Sidebar({
                         <TrashIcon size={12} />
                       </button>
                     </div>
-                  ))}
-                </div>
-              </>
+              ))}
+            </div>
+
+            <SectionHeader count={data.unfiledFiles.length}>Recent files</SectionHeader>
+            {data.unfiledFiles.length === 0 ? (
+              <div className="px-2">
+                <EmptyRow>No files outside a project</EmptyRow>
+              </div>
+            ) : (
+              <UnfiledFiles files={data.unfiledFiles} onChanged={onProjectFilesChanged} />
             )}
 
-            {data.unfiledFiles.length > 0 && (
-              <>
-                <SectionHeader count={data.unfiledFiles.length}>Recent files</SectionHeader>
-                <UnfiledFiles files={data.unfiledFiles} onChanged={onProjectFilesChanged} />
-              </>
-            )}
+            <SectionHeader count={data.drafts.length}>Drafts</SectionHeader>
+            <div className="px-2">
+              {data.drafts.length === 0 && <EmptyRow>No saved drafts</EmptyRow>}
+              {data.drafts.map((d) => (
+                <button
+                  key={d.id}
+                  onClick={() => onOpenDraft?.(d.id)}
+                  className="flex w-full items-center gap-2 truncate rounded-[10px] px-2 py-1.5 text-left text-[12.5px] text-white/70 transition hover:bg-white/[0.06] hover:text-white"
+                >
+                  <span
+                    className={`flex w-3.5 flex-shrink-0 items-center justify-center text-[10px] ${
+                      d.type === "email" ? "text-[#7fe0d2]" : "text-white/45"
+                    }`}
+                  >
+                    {d.type === "email" ? "✉" : "◆"}
+                  </span>
+                  <span className="truncate">{d.title}</span>
+                </button>
+              ))}
+            </div>
 
-            {data.drafts.length > 0 && (
-              <>
-                <SectionHeader count={data.drafts.length}>Drafts</SectionHeader>
-                <div className="px-2">
-                  {data.drafts.map((d) => (
-                    <button
-                      key={d.id}
-                      onClick={() => onOpenDraft?.(d.id)}
-                      className="flex w-full items-center gap-2 truncate rounded-[10px] px-2 py-1.5 text-left text-[12.5px] text-white/70 transition hover:bg-white/[0.06] hover:text-white"
-                    >
-                      <span
-                        className={`flex w-3.5 flex-shrink-0 items-center justify-center text-[10px] ${
-                          d.type === "email" ? "text-[#7fe0d2]" : "text-white/45"
-                        }`}
-                      >
-                        {d.type === "email" ? "✉" : "◆"}
-                      </span>
-                      <span className="truncate">{d.title}</span>
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-
-            {data.recent.length > 0 && (
-              <>
-                <SectionHeader>Conversations</SectionHeader>
-                <div className="px-2">
-                  {data.recent.map((s) => (
-                    <SessionRow
-                      key={s.id}
-                      session={s}
-                      active={s.id === activeSessionId}
-                      onSelect={selectSession}
-                      onTogglePin={onTogglePin}
-                      onDelete={onDeleteSession}
-                      pinLabel="Pin chat"
-                    />
-                  ))}
-                </div>
-              </>
-            )}
+            <SectionHeader>Conversations</SectionHeader>
+            <div className="px-2">
+              {data.recent.length === 0 && <EmptyRow>No conversations yet</EmptyRow>}
+              {data.recent.map((s) => (
+                <SessionRow
+                  key={s.id}
+                  session={s}
+                  active={s.id === activeSessionId}
+                  onSelect={selectSession}
+                  onTogglePin={onTogglePin}
+                  onDelete={onDeleteSession}
+                  pinLabel="Pin chat"
+                />
+              ))}
+            </div>
           </>
         )}
 
@@ -517,6 +511,12 @@ export function Sidebar({
   );
 }
 
+// What a section says when it holds nothing: the heading stays, so the sidebar
+// keeps its shape and the user can see what belongs there.
+function EmptyRow({ children }: { children: React.ReactNode }) {
+  return <p className="px-2 py-1 text-[11.5px] text-white/25">{children}</p>;
+}
+
 function SectionHeader({
   children,
   count,
@@ -529,7 +529,7 @@ function SectionHeader({
   return (
     <div className="mt-4 flex items-center justify-between px-4 pb-1">
       <p className="text-xs font-semibold uppercase tracking-wide text-white/35">{children}</p>
-      {count !== undefined && (
+      {count !== undefined && count > 0 && (
         <span className="rounded-full bg-white/[0.07] px-[7px] py-0.5 text-[10.5px] text-white/30">
           {count}
         </span>
