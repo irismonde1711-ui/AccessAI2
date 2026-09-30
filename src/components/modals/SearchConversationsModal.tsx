@@ -16,12 +16,12 @@ export function SearchConversationsModal({
   const [query, setQuery] = useState("");
 
   const allSessions = useMemo(() => {
-    const fromProjects = data.grc projects.flatMap((p) =>
+    const fromGRC Projects = data.grc grc projects.flatMap((p) =>
       p.sessions.map((s) => ({ ...s, group: p.name })),
     );
     return [
       ...data.pinned.map((s) => ({ ...s, group: "Pinned" })),
-      ...fromProjects,
+      ...fromGRC Projects,
       ...data.recent.map((s) => ({ ...s, group: "Recent" })),
     ];
   }, [data]);
@@ -40,7 +40,7 @@ export function SearchConversationsModal({
         type="text"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        placeholder="Search pinned, grc projects and recent chats"
+        placeholder="Search pinned, grc grc projects and recent chats"
         className="modal-input mt-4 w-full rounded-xl px-4 py-3 text-sm text-navy-deeper outline-none focus:border-teal dark:text-white"
       />
       <div className="mt-4 max-h-80 space-y-1 overflow-y-auto">

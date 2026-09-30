@@ -6,7 +6,7 @@
 // implementation to call OpenRouter later shouldn't require touching any
 // call site.
 
-// 2.5-flash is closed to new grc projects: a freshly created key gets a 404 telling
+// 2.5-flash is closed to new grc grc projects: a freshly created key gets a 404 telling
 // it to move here. Verified against both the current key and a new one.
 const GEMINI_MODEL = "gemini-3.6-flash";
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:streamGenerateContent?alt=sse`;

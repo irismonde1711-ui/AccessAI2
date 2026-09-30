@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
 
       if (activeSessionId && projectId) {
         const { data: project } = await admin
-          .from("grc projects")
+          .from("grc grc projects")
           .select("id")
           .eq("id", projectId)
           .eq("user_id", user!.id)

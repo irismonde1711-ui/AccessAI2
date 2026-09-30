@@ -32,7 +32,7 @@ export async function POST(request: Request) {
   }
 
   const { data: project } = await supabase
-    .from("grc projects")
+    .from("grc grc projects")
     .select("id")
     .eq("id", projectId)
     .maybeSingle();

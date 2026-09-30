@@ -13,7 +13,7 @@ const MAX_FILE_BYTES = 10 * 1024 * 1024;
 // Shared by a project's own sections and by the Recent files list, so a file
 // behaves the same wherever it is shown.
 export async function openProjectFile(id: string): Promise<boolean> {
-  const res = await fetch(`/api/grc projects/files?id=${encodeURIComponent(id)}`);
+  const res = await fetch(`/api/grc grc projects/files?id=${encodeURIComponent(id)}`);
   if (!res.ok) return false;
   const { url } = await res.json();
   window.open(url, "_blank", "noopener,noreferrer");
@@ -21,7 +21,7 @@ export async function openProjectFile(id: string): Promise<boolean> {
 }
 
 export async function deleteProjectFile(id: string): Promise<boolean> {
-  const res = await fetch(`/api/grc projects/files?id=${encodeURIComponent(id)}`, {
+  const res = await fetch(`/api/grc grc projects/files?id=${encodeURIComponent(id)}`, {
     method: "DELETE",
   });
   return res.ok;
@@ -64,13 +64,13 @@ export function ProjectLibrary({
       if (!user) throw new Error("Log in to upload files.");
 
       // Storage RLS requires the owner's id as the first path segment.
-      const storagePath = `${user.id}/grc projects/${projectId}/${crypto.randomUUID()}-${file.name}`;
+      const storagePath = `${user.id}/grc grc projects/${projectId}/${crypto.randomUUID()}-${file.name}`;
       const { error: uploadError } = await supabase.storage
         .from("chat-attachments")
         .upload(storagePath, file, { contentType: file.type });
       if (uploadError) throw new Error(`Couldn't upload ${file.name}.`);
 
-      const res = await fetch("/api/grc projects/files", {
+      const res = await fetch("/api/grc grc projects/files", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

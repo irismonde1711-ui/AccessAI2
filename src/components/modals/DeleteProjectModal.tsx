@@ -37,7 +37,7 @@ export function DeleteProjectModal({
     setError(null);
     setLoading(purge ? "purge" : "folder");
     const res = await fetch(
-      `/api/grc projects?id=${encodeURIComponent(project.id)}${purge ? "&purge=1" : ""}`,
+      `/api/grc grc projects?id=${encodeURIComponent(project.id)}${purge ? "&purge=1" : ""}`,
       { method: "DELETE" },
     );
     setLoading(null);

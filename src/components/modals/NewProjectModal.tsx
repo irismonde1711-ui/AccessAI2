@@ -25,7 +25,7 @@ export function NewProjectModal({
     }
     setLoading(true);
     setError(null);
-    const res = await fetch("/api/grc projects", {
+    const res = await fetch("/api/grc grc projects", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: name.trim(), color }),

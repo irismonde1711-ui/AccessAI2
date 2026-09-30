@@ -13,7 +13,7 @@ export async function POST(request: Request) {
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const { data, error } = await supabase
-    .from("grc projects")
+    .from("grc grc projects")
     .insert({ user_id: user.id, name: name.trim(), color: color || "#00B09B" })
     .select("id, name, color")
     .single();
@@ -37,7 +37,7 @@ export async function PATCH(request: Request) {
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const { error } = await supabase
-    .from("grc projects")
+    .from("grc grc projects")
     .update({ deleted_at: null })
     .eq("id", id)
     .eq("user_id", user.id);
@@ -65,7 +65,7 @@ export async function DELETE(request: Request) {
 
   if (!purge) {
     const { error: binError } = await supabase
-      .from("grc projects")
+      .from("grc grc projects")
       .update({ deleted_at: new Date().toISOString() })
       .eq("id", id)
       .eq("user_id", user.id);
@@ -122,7 +122,7 @@ export async function DELETE(request: Request) {
     }
   }
 
-  const { error } = await supabase.from("grc projects").delete().eq("id", id).eq("user_id", user.id);
+  const { error } = await supabase.from("grc grc projects").delete().eq("id", id).eq("user_id", user.id);
   if (error) return Response.json({ error: error.message }, { status: 500 });
 
   return Response.json({ ok: true });

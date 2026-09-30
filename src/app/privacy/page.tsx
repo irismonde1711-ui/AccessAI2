@@ -28,7 +28,7 @@ export default function PrivacyPage() {
             </>,
             <>
               <strong>Conversation content.</strong> The messages you send, and the assistant&apos;s
-              replies, so your conversations, grc projects and drafts persist between visits.
+              replies, so your conversations, grc grc projects and drafts persist between visits.
             </>,
             <>
               <strong>Documents you upload.</strong> Files you attach to a message, together with
@@ -57,7 +57,7 @@ export default function PrivacyPage() {
         <Bullets
           items={[
             "To provide the assistant, and to generate responses to your messages and documents.",
-            "To keep your conversations, grc projects and drafts available to you across sessions.",
+            "To keep your conversations, grc grc projects and drafts available to you across sessions.",
             "To apply fair-use limits and to distinguish free from paid accounts.",
             "To process subscription payments and confirm your plan status.",
             "To secure the service, investigate misuse, and meet our legal obligations.",

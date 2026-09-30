@@ -500,7 +500,7 @@ export function ChatView({
         <h1 className="font-display text-3xl font-semibold text-navy-deeper dark:text-white">
           {fullName
             ? "Good Day"
-            : "Start Purposely Driven GRC Projects"}
+            : "Start Purposely Driven GRC GRC Projects"}
         </h1>
         <p className="mt-2 text-muted-grey dark:text-white/50">
           {fullName

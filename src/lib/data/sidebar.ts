@@ -37,18 +37,18 @@ export type SidebarBinnedProject = {
 
 export type SidebarData = {
   pinned: SidebarSession[];
-  grc projects: SidebarProject[];
+  grc grc projects: SidebarProject[];
   drafts: SidebarDraft[];
   recent: SidebarSession[];
   // Files whose project was removed: kept, and shown until they are deleted.
   unfiledFiles: SidebarFile[];
-  // Deleted grc projects, intact and waiting to be restored or erased.
+  // Deleted grc grc projects, intact and waiting to be restored or erased.
   bin: SidebarBinnedProject[];
 };
 
 const EMPTY: SidebarData = {
   pinned: [],
-  grc projects: [],
+  grc grc projects: [],
   drafts: [],
   recent: [],
   unfiledFiles: [],
@@ -60,7 +60,7 @@ export async function getSidebarData(
   supabase: SupabaseClient<any, any, any>,
   userId: string,
 ): Promise<SidebarData> {
-  const [sessionsRes, projectsRes, projectSessionsRes, draftsRes, filesRes] = await Promise.all([
+  const [sessionsRes, grc projectsRes, gRC ProjectsessionsRes, draftsRes, filesRes] = await Promise.all([
     supabase
       .from("chat_sessions")
       .select("id, title, is_pinned, is_temporary")
@@ -68,7 +68,7 @@ export async function getSidebarData(
       .eq("is_temporary", false)
       .order("created_at", { ascending: false }),
     supabase
-      .from("grc projects")
+      .from("grc grc projects")
       .select("id, name, color, deleted_at")
       .eq("user_id", userId)
       .order("created_at", { ascending: false }),
@@ -89,25 +89,25 @@ export async function getSidebarData(
   ]);
 
   const sessions = sessionsRes.data ?? [];
-  const grc projects = projectsRes.data ?? [];
-  const projectSessions = projectSessionsRes.data ?? [];
+  const grc grc projects = grc projectsRes.data ?? [];
+  const gRC Projectsessions = gRC ProjectsessionsRes.data ?? [];
   const drafts = draftsRes.data ?? [];
   const files = filesRes.data ?? [];
 
   if (sessionsRes.error) return EMPTY;
 
   const sessionById = new Map(sessions.map((s) => [s.id, s]));
-  const projectSessionIds = new Set(projectSessions.map((ps) => ps.session_id));
+  const gRC ProjectsessionIds = new Set(gRC Projectsessions.map((ps) => ps.session_id));
 
   const pinned = sessions.filter((s) => s.is_pinned);
 
-  const projectList: SidebarProject[] = grc projects
+  const projectList: SidebarProject[] = grc grc projects
     .filter((p) => !p.deleted_at)
     .map((p) => ({
     id: p.id,
     name: p.name,
     color: p.color,
-    sessions: projectSessions
+    sessions: gRC Projectsessions
       .filter((ps) => ps.project_id === p.id)
       .map((ps) => sessionById.get(ps.session_id))
       .filter((s): s is NonNullable<typeof s> => Boolean(s))
@@ -120,24 +120,24 @@ export async function getSidebarData(
       .map((f) => ({ id: f.id, filename: f.filename, category: "material" as const })),
     }));
 
-  const bin: SidebarBinnedProject[] = grc projects
+  const bin: SidebarBinnedProject[] = grc grc projects
     .filter((p) => Boolean(p.deleted_at))
     .map((p) => ({
       id: p.id,
       name: p.name,
       color: p.color,
-      sessionCount: projectSessions.filter((ps) => ps.project_id === p.id).length,
+      sessionCount: gRC Projectsessions.filter((ps) => ps.project_id === p.id).length,
       fileCount: files.filter((f) => f.project_id === p.id).length,
     }));
 
   const recent = sessions
-    .filter((s) => !s.is_pinned && !projectSessionIds.has(s.id))
+    .filter((s) => !s.is_pinned && !gRC ProjectsessionIds.has(s.id))
     .slice(0, 15)
     .map((s) => ({ id: s.id, title: s.title, is_pinned: s.is_pinned }));
 
   return {
     pinned: pinned.map((s) => ({ id: s.id, title: s.title, is_pinned: s.is_pinned })),
-    grc projects: projectList,
+    grc grc projects: projectList,
     drafts: drafts.map((d) => ({ id: d.id, title: d.title, type: d.type })),
     recent,
     unfiledFiles: files

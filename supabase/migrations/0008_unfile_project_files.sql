@@ -9,4 +9,4 @@ alter table project_files
 
 alter table project_files
   add constraint project_files_project_id_fkey
-  foreign key (project_id) references grc projects(id) on delete set null;
+  foreign key (project_id) references grc grc projects(id) on delete set null;

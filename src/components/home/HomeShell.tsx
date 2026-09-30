@@ -43,7 +43,7 @@ type Message = {
 function findPinned(data: SidebarData, sessionId: string | null): boolean {
   if (!sessionId) return false;
   if (data.pinned.some((s) => s.id === sessionId)) return true;
-  return data.grc projects.some((p) => p.sessions.some((s) => s.id === sessionId && s.is_pinned));
+  return data.grc grc projects.some((p) => p.sessions.some((s) => s.id === sessionId && s.is_pinned));
 }
 
 function findSessionInfo(
@@ -53,7 +53,7 @@ function findSessionInfo(
   if (!sessionId) return null;
   const pinned = data.pinned.find((s) => s.id === sessionId);
   if (pinned) return { title: pinned.title, projectName: null };
-  for (const project of data.grc projects) {
+  for (const project of data.grc grc projects) {
     const s = project.sessions.find((s) => s.id === sessionId);
     if (s) return { title: s.title, projectName: project.name };
   }
@@ -256,7 +256,7 @@ export function HomeShell({
         onDeleteProject={setProjectToDelete}
         onPurgeProject={(project) => setProjectToDelete({ ...project, permanentOnly: true })}
         onRestoreProject={async (id) => {
-          await fetch("/api/grc projects", {
+          await fetch("/api/grc grc projects", {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ id }),

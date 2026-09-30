@@ -95,7 +95,7 @@ export function Sidebar({
   mobileOpen: boolean;
   onCloseMobile: () => void;
 }) {
-  const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
+  const [expandedGRC Projects, setExpandedGRC Projects] = useState<Set<string>>(new Set());
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const isMobile = useIsMobile();
 
@@ -113,7 +113,7 @@ export function Sidebar({
   }
 
   function toggleProject(id: string) {
-    setExpandedProjects((prev) => {
+    setExpandedGRC Projects((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
@@ -295,11 +295,11 @@ export function Sidebar({
                 </button>
               }
             >
-              GRC Projects
+              GRC GRC Projects
             </SectionHeader>
             <div className="px-2">
-              {data.grc projects.length === 0 && <EmptyRow>No grc projects yet</EmptyRow>}
-              {data.grc projects.map((project) => (
+              {data.grc grc projects.length === 0 && <EmptyRow>No grc grc projects yet</EmptyRow>}
+              {data.grc grc projects.map((project) => (
                 <div key={project.id}>
                   <div className="group flex items-center gap-1 rounded-lg px-2 py-1.5 hover:bg-white/5">
                     <button
@@ -315,7 +315,7 @@ export function Sidebar({
                       <span className="flex-1 truncate">{project.name}</span>
                       <ChevronIcon
                         size={12}
-                        className={`shrink-0 transition-transform ${expandedProjects.has(project.id) ? "rotate-90" : ""}`}
+                        className={`shrink-0 transition-transform ${expandedGRC Projects.has(project.id) ? "rotate-90" : ""}`}
                       />
                     </button>
                     <button
@@ -333,7 +333,7 @@ export function Sidebar({
                       <TrashIcon />
                     </button>
                   </div>
-                  {expandedProjects.has(project.id) && (
+                  {expandedGRC Projects.has(project.id) && (
                     <div className="ml-4 border-l border-white/10 pl-2">
                       {project.sessions.map((s) => (
                         <SessionRow
@@ -454,7 +454,7 @@ export function Sidebar({
           <div className="mx-4 mb-2 rounded-2xl border border-teal/30 bg-teal/10 p-4">
             <p className="text-sm font-semibold text-white">Get responses tailored to you</p>
             <p className="mt-1 text-xs text-white/60">
-              Log in to save chats, upload documents and keep your grc projects and drafts in one
+              Log in to save chats, upload documents and keep your grc grc projects and drafts in one
               place.
             </p>
             <button
