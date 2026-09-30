@@ -499,7 +499,7 @@ export function ChatView({
         </div>
         <h1 className="font-display text-3xl font-semibold text-navy-deeper dark:text-white">
           {fullName
-            ? "Bonjour"
+            ? "Good Day"
             : "Start Purposely Driven Projects"}
         </h1>
         <p className="mt-2 text-muted-grey dark:text-white/50">

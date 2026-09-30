@@ -289,16 +289,16 @@ export function Sidebar({
                 <button
                   onClick={onOpenNewProject}
                   className="text-white/50 hover:text-white"
-                  aria-label="New project"
+                  aria-label="New GRC project"
                 >
                   <PlusIcon size={15} />
                 </button>
               }
             >
-              Projects
+              GRC Projects
             </SectionHeader>
             <div className="px-2">
-              {data.projects.length === 0 && <EmptyRow>No projects yet</EmptyRow>}
+              {data.projects.length === 0 && <EmptyRow>No GRC projects yet</EmptyRow>}
               {data.projects.map((project) => (
                 <div key={project.id}>
                   <div className="group flex items-center gap-1 rounded-lg px-2 py-1.5 hover:bg-white/5">
