@@ -5,7 +5,7 @@ import { hasActiveSubscription } from "@/lib/data/subscription";
 
 const EMPTY_SIDEBAR: SidebarData = {
   pinned: [],
-  projects: [],
+  grc projects: [],
   drafts: [],
   recent: [],
   unfiledFiles: [],

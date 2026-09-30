@@ -7,7 +7,7 @@ const ROWS: [string, string, string, string, string][] = [
   ["Email sends", "1 / 4hrs", "1 / 4hrs", "Unlimited", "Unlimited"],
   ["Document uploads", "3 / 4hrs", "3 / 4hrs", "Unlimited", "Unlimited"],
   ["Saved history", "—", "Yes", "Yes", "Yes"],
-  ["Projects, pins & drafts", "—", "Yes", "Yes", "Shared"],
+  ["GRC Projects, pins & drafts", "—", "Yes", "Yes", "Shared"],
   ["Send-for-review log", "—", "Personal", "Personal", "Team-wide"],
   ["Support", "Community", "Email", "Priority email", "Named contact"],
 ];

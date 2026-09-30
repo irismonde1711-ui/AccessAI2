@@ -112,7 +112,7 @@ export function AuthModal({
         {isSignup ? "Log in or sign up" : "Log in or sign up"}
       </h2>
       <p className="mt-2 text-sm text-white/60">
-        Save your conversations and unlock projects, drafts and document
+        Save your conversations and unlock grc projects, drafts and document
         uploads.
       </p>
 

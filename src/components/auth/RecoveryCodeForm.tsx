@@ -23,7 +23,7 @@ export function RecoveryCodeForm({
     e.preventDefault();
     setError(null);
 
-    // Supabase projects can be set to a 6- or 8-digit code, so accept either
+    // Supabase grc projects can be set to a 6- or 8-digit code, so accept either
     // rather than hard-coding a length the dashboard controls.
     const token = code.replace(/\D/g, "");
     if (token.length < 6) {

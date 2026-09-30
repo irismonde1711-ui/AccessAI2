@@ -42,8 +42,8 @@ create table chat_messages (
   created_at timestamptz default now()
 );
 
--- Projects (folders for organizing conversations)
-create table projects (
+-- GRC Projects (folders for organizing conversations)
+create table grc projects (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references auth.users(id) on delete cascade,
   name text not null,
@@ -51,10 +51,10 @@ create table projects (
   created_at timestamptz default now()
 );
 
--- Many-to-many: sessions assigned to projects
+-- Many-to-many: sessions assigned to grc projects
 create table project_sessions (
   id uuid primary key default gen_random_uuid(),
-  project_id uuid references projects(id) on delete cascade,
+  project_id uuid references grc projects(id) on delete cascade,
   session_id uuid references chat_sessions(id) on delete cascade,
   added_at timestamptz default now()
 );
@@ -108,7 +108,7 @@ create index idx_usage_tracking_ip_action_time on usage_tracking(ip_address, act
 -- Indexes for common sidebar/list lookups
 create index idx_chat_sessions_user on chat_sessions(user_id);
 create index idx_chat_messages_session on chat_messages(session_id);
-create index idx_projects_user on projects(user_id);
+create index idx_projects_user on grc projects(user_id);
 create index idx_project_sessions_project on project_sessions(project_id);
 create index idx_project_sessions_session on project_sessions(session_id);
 create index idx_drafts_user on drafts(user_id);
@@ -146,7 +146,7 @@ alter table profiles enable row level security;
 alter table subscriptions enable row level security;
 alter table chat_sessions enable row level security;
 alter table chat_messages enable row level security;
-alter table projects enable row level security;
+alter table grc projects enable row level security;
 alter table project_sessions enable row level security;
 alter table drafts enable row level security;
 alter table emails_sent enable row level security;
@@ -164,19 +164,19 @@ create policy "chat_sessions_all_own" on chat_sessions for all
 create policy "chat_messages_all_own" on chat_messages for all
   using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
-create policy "projects_all_own" on projects for all
+create policy "projects_all_own" on grc projects for all
   using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 create policy "project_sessions_all_own" on project_sessions for all
   using (exists (
-    select 1 from projects
-    where projects.id = project_sessions.project_id
-      and projects.user_id = auth.uid()
+    select 1 from grc projects
+    where grc projects.id = project_sessions.project_id
+      and grc projects.user_id = auth.uid()
   ))
   with check (exists (
-    select 1 from projects
-    where projects.id = project_sessions.project_id
-      and projects.user_id = auth.uid()
+    select 1 from grc projects
+    where grc projects.id = project_sessions.project_id
+      and grc projects.user_id = auth.uid()
   ));
 
 create policy "drafts_all_own" on drafts for all

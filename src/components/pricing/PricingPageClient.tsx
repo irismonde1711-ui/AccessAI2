@@ -98,7 +98,7 @@ export function PricingPageClient({
           tagline="Save your work and organise it."
           price="$0"
           priceNote="Same allowance, plus saved history"
-          features={["Projects, pinned chats and drafts", "Saved conversation history", "Email send with review tagging"]}
+          features={["GRC Projects, pinned chats and drafts", "Saved conversation history", "Email send with review tagging"]}
           cta={
             isLoggedIn ? (
               <span className="block w-full rounded-full border border-navy-deeper/20 py-3 text-center text-sm font-medium text-muted-grey dark:border-white/20 dark:text-white/50">
@@ -145,7 +145,7 @@ export function PricingPageClient({
           price="From $129"
           priceUnit="/month"
           priceNote="Up to 10 seats, invoiced annually"
-          features={["Everything in Pro", "Shared projects and drafts", "Central send audit trail", "Australian data residency guarantee"]}
+          features={["Everything in Pro", "Shared grc projects and drafts", "Central send audit trail", "Australian data residency guarantee"]}
           cta={
             <a
               href="mailto:sales@accessai2.example"

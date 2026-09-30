@@ -37,18 +37,18 @@ export type SidebarBinnedProject = {
 
 export type SidebarData = {
   pinned: SidebarSession[];
-  projects: SidebarProject[];
+  grc projects: SidebarProject[];
   drafts: SidebarDraft[];
   recent: SidebarSession[];
   // Files whose project was removed: kept, and shown until they are deleted.
   unfiledFiles: SidebarFile[];
-  // Deleted projects, intact and waiting to be restored or erased.
+  // Deleted grc projects, intact and waiting to be restored or erased.
   bin: SidebarBinnedProject[];
 };
 
 const EMPTY: SidebarData = {
   pinned: [],
-  projects: [],
+  grc projects: [],
   drafts: [],
   recent: [],
   unfiledFiles: [],
@@ -68,7 +68,7 @@ export async function getSidebarData(
       .eq("is_temporary", false)
       .order("created_at", { ascending: false }),
     supabase
-      .from("projects")
+      .from("grc projects")
       .select("id, name, color, deleted_at")
       .eq("user_id", userId)
       .order("created_at", { ascending: false }),
@@ -89,7 +89,7 @@ export async function getSidebarData(
   ]);
 
   const sessions = sessionsRes.data ?? [];
-  const projects = projectsRes.data ?? [];
+  const grc projects = projectsRes.data ?? [];
   const projectSessions = projectSessionsRes.data ?? [];
   const drafts = draftsRes.data ?? [];
   const files = filesRes.data ?? [];
@@ -101,7 +101,7 @@ export async function getSidebarData(
 
   const pinned = sessions.filter((s) => s.is_pinned);
 
-  const projectList: SidebarProject[] = projects
+  const projectList: SidebarProject[] = grc projects
     .filter((p) => !p.deleted_at)
     .map((p) => ({
     id: p.id,
@@ -120,7 +120,7 @@ export async function getSidebarData(
       .map((f) => ({ id: f.id, filename: f.filename, category: "material" as const })),
     }));
 
-  const bin: SidebarBinnedProject[] = projects
+  const bin: SidebarBinnedProject[] = grc projects
     .filter((p) => Boolean(p.deleted_at))
     .map((p) => ({
       id: p.id,
@@ -137,7 +137,7 @@ export async function getSidebarData(
 
   return {
     pinned: pinned.map((s) => ({ id: s.id, title: s.title, is_pinned: s.is_pinned })),
-    projects: projectList,
+    grc projects: projectList,
     drafts: drafts.map((d) => ({ id: d.id, title: d.title, type: d.type })),
     recent,
     unfiledFiles: files

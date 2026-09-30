@@ -295,11 +295,11 @@ export function Sidebar({
                 </button>
               }
             >
-              Projects
+              GRC Projects
             </SectionHeader>
             <div className="px-2">
-              {data.projects.length === 0 && <EmptyRow>No projects yet</EmptyRow>}
-              {data.projects.map((project) => (
+              {data.grc projects.length === 0 && <EmptyRow>No grc projects yet</EmptyRow>}
+              {data.grc projects.map((project) => (
                 <div key={project.id}>
                   <div className="group flex items-center gap-1 rounded-lg px-2 py-1.5 hover:bg-white/5">
                     <button
@@ -454,7 +454,7 @@ export function Sidebar({
           <div className="mx-4 mb-2 rounded-2xl border border-teal/30 bg-teal/10 p-4">
             <p className="text-sm font-semibold text-white">Get responses tailored to you</p>
             <p className="mt-1 text-xs text-white/60">
-              Log in to save chats, upload documents and keep your projects and drafts in one
+              Log in to save chats, upload documents and keep your grc projects and drafts in one
               place.
             </p>
             <button

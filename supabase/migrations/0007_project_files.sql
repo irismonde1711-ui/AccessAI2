@@ -3,7 +3,7 @@
 -- lives beside its conversations.
 create table project_files (
   id uuid primary key default gen_random_uuid(),
-  project_id uuid references projects(id) on delete cascade,
+  project_id uuid references grc projects(id) on delete cascade,
   user_id uuid references auth.users(id) on delete cascade,
   category text check (category in ('evidence', 'material')) not null,
   filename text not null,
