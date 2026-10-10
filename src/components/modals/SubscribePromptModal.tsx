@@ -22,7 +22,7 @@ export function SubscribePromptModal({
           Account created
         </h2>
         <p className="mx-auto mb-6 text-sm leading-relaxed text-muted-grey dark:text-white/60">
-          You&apos;re on the free plan — 10 messages, 1 email send and 3 uploads every 4 hours. Go
+          You&apos;re on the free plan — 10 messages, 1 email send and 5 uploads every 4 hours. Go
           unlimited for $29.
         </p>
 

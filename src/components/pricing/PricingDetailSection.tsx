@@ -4,18 +4,18 @@ import { useState } from "react";
 
 const ROWS: [string, string, string, string, string][] = [
   ["AI messages", "10 / 4hrs", "10 / 4hrs", "Unlimited", "Unlimited"],
-  ["Email sends", "1 / 4hrs", "1 / 4hrs", "Unlimited", "Unlimited"],
-  ["Document uploads", "3 / 4hrs", "3 / 4hrs", "Unlimited", "Unlimited"],
+  ["Email sends", "—", "1 / 4hrs", "Unlimited", "Unlimited"],
+  ["Document uploads", "—", "5 / 4hrs", "Unlimited", "Unlimited"],
   ["Saved history", "—", "Yes", "Yes", "Yes"],
   ["Projects, pins & drafts", "—", "Yes", "Yes", "Shared"],
   ["Send-for-review log", "—", "Personal", "Personal", "Team-wide"],
-  ["Support", "Community", "Email", "Priority email", "Named contact"],
+  ["Support", "—", "Email", "Email", "Named contact"],
 ];
 
 const FAQ = [
   {
-    q: "Is my data stored in Australia?",
-    a: "Yes. Conversations, drafts and uploaded documents are stored in Australian data centres, and documents are retained only as long as your account keeps the conversation.",
+    q: "Where is my data held?",
+    a: "AccessAI2 is run from Australia by Reseaux Access Pty Ltd. Your account, conversations and uploaded documents are held with our hosting and database providers, and the content of a message is sent to Google's Gemini API to generate the reply, which may process it outside Australia. Our Privacy Policy sets out exactly which provider receives what.",
   },
   {
     q: 'What does "Send for Review" actually do?',
@@ -23,7 +23,7 @@ const FAQ = [
   },
   {
     q: "How does the free allowance reset?",
-    a: "Each of the 10 messages, 1 email send and 3 document uploads refills on a rolling 4-hour window measured from your first action in that window, not a fixed daily reset.",
+    a: "Each of the 10 messages, 1 email send and 5 document uploads refills on a rolling 4-hour window measured from your first action in that window, not a fixed daily reset. Uploads are shared across chat attachments and project files.",
   },
   {
     q: "What is a temporary chat?",

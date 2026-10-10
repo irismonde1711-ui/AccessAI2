@@ -83,7 +83,7 @@ export default function TermsPage() {
       <Section heading="6. Free tier and usage limits">
         <p>
           Free accounts are subject to fair-use limits over a rolling four-hour window — currently
-          10 messages, 3 document uploads and 1 email send. We may adjust these limits. Attempting
+          10 messages, 5 document uploads and 1 email send. We may adjust these limits. Attempting
           to evade them may result in suspension.
         </p>
       </Section>

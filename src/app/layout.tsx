@@ -21,8 +21,29 @@ const jetBrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AccessAI2",
-  description: "AI-powered assistant for governance, HR, finance, tax and ESG",
+  metadataBase: new URL("https://www.accessai2.com"),
+  title: {
+    default: "AccessAI2 — compliance, drafting and document review",
+    template: "%s — AccessAI2",
+  },
+  description:
+    "An AI assistant for governance, risk, HR, finance, tax and ESG work: ask a question, review a document, and draft the email that follows.",
+  applicationName: "AccessAI2",
+  // Ads and shared links show this card rather than a bare URL.
+  openGraph: {
+    type: "website",
+    siteName: "AccessAI2",
+    url: "https://www.accessai2.com",
+    title: "AccessAI2 — compliance, drafting and document review",
+    description:
+      "Ask a compliance question, review a document, draft the email that follows. Ten messages free, no card required.",
+  },
+  twitter: {
+    card: "summary",
+    title: "AccessAI2 — compliance, drafting and document review",
+    description:
+      "Ask a compliance question, review a document, draft the email that follows. Ten messages free, no card required.",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

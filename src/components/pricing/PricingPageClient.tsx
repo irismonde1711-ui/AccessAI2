@@ -72,8 +72,8 @@ export function PricingPageClient({
           Compliance capacity, priced per organisation
         </h1>
         <p className="relative mx-auto mt-4 max-w-xl text-white/60">
-          Start free. Upgrade when your team needs unlimited drafting, sending and document
-          review. All plans include Australian data residency.
+          Start low and upgrade when your team needs unlimited drafting, sending and document
+          review. Run from Australia by Reseaux Access Pty Ltd, trading as Iris Monde.
         </p>
       </section>
 
@@ -82,8 +82,8 @@ export function PricingPageClient({
           name="Guest"
           tagline="Try the assistant with no account."
           price="$0"
-          priceNote="10 messages · 1 send · 3 uploads per 4 hours"
-          features={["Full chat interface", "Document upload (3 per window)", "No conversation history"]}
+          priceNote="10 messages per 4 hours"
+          features={["Full chat interface", "No account or card needed", "Nothing saved between visits"]}
           cta={
             <Link
               href="/"
@@ -97,7 +97,7 @@ export function PricingPageClient({
           name="Free account"
           tagline="Save your work and organise it."
           price="$0"
-          priceNote="Same allowance, plus saved history"
+          priceNote="10 messages, 5 uploads and 1 email send per 4 hours"
           features={["Projects, pinned chats and drafts", "Saved conversation history", "Email send with review tagging"]}
           cta={
             isLoggedIn ? (
@@ -121,7 +121,7 @@ export function PricingPageClient({
           priceUnit="/month"
           priceNote="One-time payment via PayPal · unlocks 30 days, renew anytime"
           featured
-          features={["Unlimited messages and sends", "Unlimited document analysis", "Priority model access", "Compliance-tagged send log"]}
+          features={["Unlimited messages and sends", "Unlimited document analysis", "Detailed response mode", "Compliance-tagged send log"]}
           cta={
             isPaid ? (
               <span className="block w-full rounded-full bg-teal/15 py-3 text-center text-sm font-semibold text-teal">
@@ -145,10 +145,10 @@ export function PricingPageClient({
           price="From $129"
           priceUnit="/month"
           priceNote="Up to 10 seats, invoiced annually"
-          features={["Everything in Pro", "Shared projects and drafts", "Central send audit trail", "Australian data residency guarantee"]}
+          features={["Everything in Pro", "Shared projects and drafts", "Central send audit trail", "Named account contact"]}
           cta={
             <a
-              href="mailto:sales@accessai2.example"
+              href="mailto:contact@reseauxaccess.com"
               className="block w-full rounded-full border border-navy-deeper/20 py-3 text-center text-sm font-medium text-navy-deeper hover:bg-navy-deeper/5 dark:border-white/20 dark:text-white dark:hover:bg-white/10"
             >
               Talk to us

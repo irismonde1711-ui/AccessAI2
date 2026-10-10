@@ -55,6 +55,34 @@ export async function POST(request: NextRequest) {
   const admin = createAdminClient();
   const ip = getClientIp(request);
 
+  // Everything the browser asserts about ownership is checked here, before a
+  // single unit of the allowance is spent on a request that cannot proceed.
+  //
+  // Storage paths are read back with the service-role key, which ignores row
+  // security, so a path has to be proven to belong to the caller. Guests have
+  // no folder of their own and cannot attach anything.
+  const ownsAttachments = attachments.every(
+    (a) => typeof a.storagePath === "string" && user && a.storagePath.startsWith(`${user.id}/`),
+  );
+  if (!ownsAttachments) {
+    console.error("[chat] rejected an attachment outside the caller's own storage folder");
+    return Response.json({ error: "Invalid attachment" }, { status: 403 });
+  }
+
+  // A conversation id is equally client-supplied, and messages are written to
+  // it with the same key.
+  if (sessionId && user) {
+    const { data: ownSession } = await admin
+      .from("chat_sessions")
+      .select("id")
+      .eq("id", sessionId)
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (!ownSession) {
+      return Response.json({ error: "Conversation not found" }, { status: 404 });
+    }
+  }
+
   const { data: usage, error: usageError } = await admin.rpc(
     "check_and_record_usage",
     {
