@@ -15,7 +15,12 @@ const ROWS: [string, string, string, string, string][] = [
 const FAQ = [
   {
     q: "Where is my data held?",
-    a: "AccessAI2 is run from Australia by Reseaux Access Pty Ltd. Your account, conversations and uploaded documents are held with our hosting and database providers, and the content of a message is sent to Google's Gemini API to generate the reply, which may process it outside Australia. Our Privacy Policy sets out exactly which provider receives what.",
+    a: [
+      "AccessAI2 is operated from Australia. Your account, conversations and uploaded documents are stored using our hosting and database infrastructure.",
+      "We engage third-party providers only when necessary for service delivery, preferred answers, compliance or authorised data processing. The content of a message may be shared with third-party AI platforms to generate a response.",
+      "Any data shared with third-party providers is limited to the information necessary for the relevant purpose and is handled in accordance with our Privacy Policy, which identifies the providers involved and explains how data is processed and protected.",
+      "Where available and technically supported, client data may be processed locally without sharing it with or providing access to third-party AI platforms. Applicable processing arrangements depend on the client's service configuration and requirements.",
+    ].join("\n\n"),
   },
   {
     q: 'What does "Send for Review" actually do?',
@@ -86,7 +91,13 @@ export function PricingDetailSection() {
               </span>
             </button>
             {openFaq === i && (
-              <p className="px-4 pb-3 text-sm text-muted-grey dark:text-white/60">{item.a}</p>
+              <div className="space-y-2.5 px-4 pb-3">
+                {item.a.split("\n\n").map((paragraph) => (
+                  <p key={paragraph} className="text-sm leading-relaxed text-muted-grey dark:text-white/60">
+                    {paragraph}
+                  </p>
+                ))}
+              </div>
             )}
           </div>
         ))}
