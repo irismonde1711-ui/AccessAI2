@@ -24,9 +24,6 @@ export function PricingPageClient({
 }) {
   const [modal, setModal] = useState<ModalState>(null);
   const [paidUntil, setPaidUntil] = useState<string | null>(null);
-  // The breakdown used to sit open underneath its own button, so clicking
-  // "View detailed pricing" scrolled a few pixels and looked broken.
-  const [detailOpen, setDetailOpen] = useState(false);
   const router = useRouter();
 
   return (
@@ -161,36 +158,15 @@ export function PricingPageClient({
       </section>
 
       <div className="pb-10 text-center">
-        <button
-          type="button"
-          aria-expanded={detailOpen}
-          aria-controls="pricing-detail"
-          onClick={() => {
-            const opening = !detailOpen;
-            setDetailOpen(opening);
-            if (opening) {
-              // Let the section render before scrolling to it.
-              requestAnimationFrame(() =>
-                document
-                  .getElementById("pricing-detail")
-                  ?.scrollIntoView({ behavior: "smooth", block: "start" }),
-              );
-            }
-          }}
-          className="inline-flex items-center gap-2 rounded-full border border-navy-deeper/20 px-5 py-2.5 text-sm font-medium text-navy-deeper hover:bg-navy-deeper/5 dark:border-white/20 dark:text-white dark:hover:bg-white/10"
+        <a
+          href="#pricing-detail"
+          className="inline-block rounded-full border border-navy-deeper/20 px-5 py-2.5 text-sm font-medium text-navy-deeper hover:bg-navy-deeper/5 dark:border-white/20 dark:text-white dark:hover:bg-white/10"
         >
-          {detailOpen ? "Hide detailed pricing" : "View Detailed Pricing Breakdown"}
-          <span aria-hidden className={`transition-transform ${detailOpen ? "rotate-180" : ""}`}>
-            ⌄
-          </span>
-        </button>
+          View Detailed Pricing Breakdown
+        </a>
       </div>
 
-      {/* Kept in the page rather than unmounted, so the comparison table and
-          the answers stay readable to search engines either way. */}
-      <div hidden={!detailOpen}>
-        <PricingDetailSection />
-      </div>
+      <PricingDetailSection />
 
       <section className="sidebar-gradient relative overflow-hidden px-6 py-16 text-center">
         <GlowHero />
