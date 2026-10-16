@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Sora, DM_Sans, JetBrains_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { ServiceWorkerRegistrar } from "@/components/pwa/ServiceWorkerRegistrar";
@@ -46,13 +47,37 @@ export const metadata: Metadata = {
   },
 };
 
+// The Google Ads tag, so clicks from the campaigns can be matched to what
+// people actually do here. The id is public by design — it appears in the
+// page source of every site that runs it.
+//
+// Development is deliberately excluded: local testing would otherwise land in
+// the client's advertising reports as real traffic.
+const GOOGLE_ADS_ID = "AW-18496797402";
+
 export default function RootLayout({ children }: LayoutProps<"/">) {
+  const trackAds = process.env.NODE_ENV === "production";
+
   return (
     <html
       lang="en"
       className={`${sora.variable} ${dmSans.variable} ${jetBrainsMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-panel-grey text-foreground font-sans">
+        {trackAds && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${GOOGLE_ADS_ID}`}
+              strategy="afterInteractive"
+            />
+            <Script id="google-ads-tag" strategy="afterInteractive">
+              {`window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', '${GOOGLE_ADS_ID}');`}
+            </Script>
+          </>
+        )}
         <RecoveryRedirect />
         <ThemeProvider>{children}</ThemeProvider>
         <ServiceWorkerRegistrar />

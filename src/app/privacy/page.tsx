@@ -93,6 +93,10 @@ export default function PrivacyPage() {
             <>
               <strong>Resend</strong> — delivers emails you choose to send through the service.
             </>,
+            <>
+              <strong>Google Ads</strong> — measures whether a visit began with one of our
+              advertisements. This sees your visit, not the contents of your conversations.
+            </>,
           ]}
         />
         <p>
@@ -144,9 +148,24 @@ export default function PrivacyPage() {
 
       <Section heading="8. Cookies and similar technologies">
         <p>
-          We use cookies and browser storage strictly to keep you signed in and to remember
-          preferences such as your light or dark theme. We do not use advertising or cross-site
-          tracking cookies.
+          We use cookies and browser storage to keep you signed in and to remember preferences
+          such as your light or dark theme.
+        </p>
+        <p>
+          We also run Google&apos;s advertising tag so we can see which of our advertisements
+          lead people to sign up. Google may set cookies through it and may use that information
+          to measure and improve the advertising it shows. We do not sell this information, and
+          it is not used to build a profile of you for anyone else. You can limit it through
+          your{" "}
+          <a
+            href="https://myadcenter.google.com"
+            className="text-teal underline"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Google Ad Centre
+          </a>{" "}
+          settings or your browser&apos;s cookie controls.
         </p>
       </Section>
 
