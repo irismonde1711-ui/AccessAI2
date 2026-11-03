@@ -8,6 +8,7 @@ import { useVoiceInput } from "@/lib/useVoiceInput";
 import { useIsMobile } from "@/lib/useIsMobile";
 import { PlusIcon, MicIcon, SendIcon, PinIcon, CloseIcon, MoreIcon } from "@/components/ui/Icons";
 import { createClient } from "@/lib/supabase/client";
+import { downloadAsWord, downloadTablesAsExcel, hasTable, printAsPdf } from "@/lib/export/documents";
 
 type MessageFile = { filename: string; mimeType: string };
 
@@ -40,6 +41,39 @@ const LENGTH_LABEL: Record<ResponseLength, string> = {
   brief: "Brief",
   detailed: "Detailed",
 };
+
+const TEMPLATES: { label: string; prompt: string }[] = [
+  {
+    label: "Board paper",
+    prompt:
+      "Draft a board paper on [topic]. Include purpose, background, key risks, options with pros and cons, a recommendation, and the decision sought. Keep it to one page.",
+  },
+  {
+    label: "Risk register",
+    prompt:
+      "Build a risk register for [activity or project] as a table with columns: Risk, Category, Likelihood, Consequence, Inherent rating, Controls, Residual rating, Owner, Review date. Suggest eight risks to start from.",
+  },
+  {
+    label: "Obligations list",
+    prompt:
+      "List the compliance obligations for [type of organisation] in [jurisdiction] as a table with columns: Obligation, Source or legislation, Frequency, Due date, Responsible, Evidence required.",
+  },
+  {
+    label: "Review a document",
+    prompt:
+      "Review the attached document and tell me: what it commits us to, anything unusual or one-sided, what is missing, and the three things I should question before signing.",
+  },
+  {
+    label: "Policy draft",
+    prompt:
+      "Draft a [policy name] policy for a small Australian organisation. Include purpose, scope, roles and responsibilities, the policy itself, breaches, and a review cycle.",
+  },
+  {
+    label: "Reply to a regulator",
+    prompt:
+      "Help me draft a response to a regulator's notice. Ask me for the notice details first, then produce a measured, factual reply that answers each point raised.",
+  },
+];
 
 const LENGTH_HINT: Record<ResponseLength, string> = {
   auto: "Let the assistant decide",
@@ -88,11 +122,14 @@ export function ChatView({
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [responseLength, setResponseLength] = useState<ResponseLength>("auto");
   const [lengthMenuOpen, setLengthMenuOpen] = useState(false);
+  const [exportMenuFor, setExportMenuFor] = useState<string | null>(null);
+  const [exportingId, setExportingId] = useState<string | null>(null);
   const [messagesRemaining, setMessagesRemaining] = useState<number | null>(null);
   const [documentsUnlockAt, setDocumentsUnlockAt] = useState<string | null>(null);
   const sessionIdRef = useRef<string | null>(initialSessionId);
   const abortRef = useRef<AbortController | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const voice = useVoiceInput((transcript) => setInput((prev) => (prev ? `${prev} ${transcript}` : transcript)));
   const isMobile = useIsMobile();
@@ -110,6 +147,24 @@ export function ChatView({
       })
       .catch(() => {});
   }, []);
+
+  // Word and Excel are written in the browser from the answer's own markdown,
+  // so exporting costs nothing and works offline once the page is open.
+  async function handleExport(id: string, text: string, format: "word" | "pdf" | "excel") {
+    setExportMenuFor(null);
+    setError(null);
+    setExportingId(id);
+    try {
+      if (format === "word") await downloadAsWord(text);
+      else if (format === "excel") await downloadTablesAsExcel(text);
+      else printAsPdf(text);
+    } catch (err) {
+      console.error("[export] failed:", err);
+      setError("That download didn't work. Please try again.");
+    } finally {
+      setExportingId(null);
+    }
+  }
 
   async function handleSend(e: React.SyntheticEvent) {
     e.preventDefault();
@@ -362,6 +417,7 @@ export function ChatView({
           <PlusIcon size={17} />
         </button>
         <textarea
+          ref={inputRef}
           rows={1}
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -516,6 +572,23 @@ export function ChatView({
             What can you do?
           </button>
         )}
+
+        <div className="mt-6 flex max-w-2xl flex-wrap justify-center gap-2">
+          {TEMPLATES.map((template) => (
+            <button
+              key={template.label}
+              type="button"
+              onClick={() => {
+                setInput(template.prompt);
+                inputRef.current?.focus();
+              }}
+              title={template.prompt}
+              className="rounded-full border border-black/10 bg-white px-3.5 py-1.5 text-[13px] text-navy-deeper transition hover:border-teal/40 hover:bg-teal/5 dark:border-white/15 dark:bg-white/5 dark:text-white/80 dark:hover:bg-white/10"
+            >
+              {template.label}
+            </button>
+          ))}
+        </div>
         <div className="mt-6 w-full">{composer}</div>
         {error && <p className="mx-auto mt-4 max-w-2xl text-sm text-red-500">{error}</p>}
       </div>
@@ -608,6 +681,47 @@ export function ChatView({
                             Send / Review
                           </button>
                         )}
+                        <div className="relative">
+                          <button
+                            onClick={() => setExportMenuFor(exportMenuFor === m.id ? null : m.id)}
+                            aria-expanded={exportMenuFor === m.id}
+                            className="hover:text-navy-deeper dark:hover:text-white"
+                          >
+                            {exportingId === m.id ? "Preparing…" : "Download"}
+                          </button>
+                          {exportMenuFor === m.id && (
+                            <>
+                              <button
+                                type="button"
+                                aria-label="Close download menu"
+                                className="fixed inset-0 z-10 cursor-default"
+                                onClick={() => setExportMenuFor(null)}
+                              />
+                              <div className="absolute bottom-6 left-0 z-20 w-44 overflow-hidden rounded-xl border border-black/10 bg-white py-1 shadow-xl dark:border-white/10 dark:bg-navy-dark">
+                                <button
+                                  onClick={() => handleExport(m.id, m.text, "word")}
+                                  className="block w-full px-3 py-2 text-left text-[13px] text-navy-deeper hover:bg-black/5 dark:text-white dark:hover:bg-white/10"
+                                >
+                                  Word document
+                                </button>
+                                <button
+                                  onClick={() => handleExport(m.id, m.text, "pdf")}
+                                  className="block w-full px-3 py-2 text-left text-[13px] text-navy-deeper hover:bg-black/5 dark:text-white dark:hover:bg-white/10"
+                                >
+                                  PDF
+                                </button>
+                                {hasTable(m.text) && (
+                                  <button
+                                    onClick={() => handleExport(m.id, m.text, "excel")}
+                                    className="block w-full px-3 py-2 text-left text-[13px] text-navy-deeper hover:bg-black/5 dark:text-white dark:hover:bg-white/10"
+                                  >
+                                    Excel spreadsheet
+                                  </button>
+                                )}
+                              </div>
+                            </>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>
