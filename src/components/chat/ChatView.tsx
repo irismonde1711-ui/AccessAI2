@@ -692,7 +692,7 @@ export function ChatView({
               // Everything downstream — what is shown, copied, emailed and
               // exported — follows the version currently on screen.
               const translation = showOriginal[m.id] ? undefined : translations[m.id];
-              const shownText = edits[m.id] ?? (translation ? translation.text : m.text);
+              const shownText = translation ? translation.text : (edits[m.id] ?? m.text);
               const isEditing = editingId === m.id;
               return (
                 <div
@@ -890,13 +890,13 @@ export function ChatView({
                                   </button>
                                 )}
                                 <button
-                                  onClick={() => handleTranslate(m.id, m.text, "fr", "French")}
+                                  onClick={() => handleTranslate(m.id, shownText, "fr", "French")}
                                   className="block w-full px-3 py-2 text-left text-[13px] text-navy-deeper hover:bg-black/5 dark:text-white dark:hover:bg-white/10"
                                 >
                                   French
                                 </button>
                                 <button
-                                  onClick={() => handleTranslate(m.id, m.text, "en", "English")}
+                                  onClick={() => handleTranslate(m.id, shownText, "en", "English")}
                                   className="block w-full px-3 py-2 text-left text-[13px] text-navy-deeper hover:bg-black/5 dark:text-white dark:hover:bg-white/10"
                                 >
                                   English
