@@ -129,6 +129,12 @@ export function ChatView({
   // Translations sit beside the original rather than replacing it: the answer
   // was produced in one language for a reason, and people compare the two.
   const [translations, setTranslations] = useState<Record<string, Translation>>({});
+  // An answer is usually a draft of something: a paragraph to soften, a name
+  // to correct. Editing it here means the Word file or the PDF comes out right
+  // the first time, instead of being fixed again in another program.
+  const [edits, setEdits] = useState<Record<string, string>>({});
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState("");
   const [showOriginal, setShowOriginal] = useState<Record<string, boolean>>({});
   const [translateMenuFor, setTranslateMenuFor] = useState<string | null>(null);
   const [translatingId, setTranslatingId] = useState<string | null>(null);
@@ -172,6 +178,42 @@ export function ChatView({
     } finally {
       setExportingId(null);
     }
+  }
+
+  function startEditing(id: string, text: string) {
+    setExportMenuFor(null);
+    setTranslateMenuFor(null);
+    setEditingId(id);
+    setEditDraft(text);
+  }
+
+  function saveEdit(id: string) {
+    const text = editDraft.trim();
+    setEditingId(null);
+    if (text.length === 0) return;
+    setEdits((current) => ({ ...current, [id]: text }));
+    // The answer is no longer the one that was translated, so the translation
+    // belongs to a version that no longer exists. Dropping it keeps the
+    // Translate button honest: it will translate what is actually on screen.
+    setTranslations((current) => {
+      const next = { ...current };
+      delete next[id];
+      return next;
+    });
+    setShowOriginal((current) => {
+      const next = { ...current };
+      delete next[id];
+      return next;
+    });
+  }
+
+  function revertEdit(id: string) {
+    setEditingId(null);
+    setEdits((current) => {
+      const next = { ...current };
+      delete next[id];
+      return next;
+    });
   }
 
   async function handleTranslate(id: string, text: string, language: "fr" | "en", label: string) {
@@ -650,7 +692,8 @@ export function ChatView({
               // Everything downstream — what is shown, copied, emailed and
               // exported — follows the version currently on screen.
               const translation = showOriginal[m.id] ? undefined : translations[m.id];
-              const shownText = translation ? translation.text : m.text;
+              const shownText = edits[m.id] ?? (translation ? translation.text : m.text);
+              const isEditing = editingId === m.id;
               return (
                 <div
                   key={m.id}
@@ -680,7 +723,43 @@ export function ChatView({
                           : "rounded-3xl rounded-br-lg bg-teal px-5 py-3 text-white"
                       }
                     >
-                      {m.role === "assistant" && m.text === "" && streaming ? (
+                      {m.role === "assistant" && isEditing ? (
+                        <div>
+                          <textarea
+                            value={editDraft}
+                            onChange={(e) => setEditDraft(e.target.value)}
+                            rows={Math.min(24, Math.max(4, editDraft.split("\n").length + 1))}
+                            autoFocus
+                            aria-label="Edit this answer"
+                            className="w-full resize-y rounded-xl border border-black/10 bg-panel-grey p-3 font-mono text-[13px] leading-relaxed text-navy-deeper outline-none focus:border-teal dark:border-white/15 dark:bg-white/5 dark:text-white"
+                          />
+                          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs">
+                            <button
+                              onClick={() => saveEdit(m.id)}
+                              className="rounded-full bg-teal px-3 py-1.5 font-semibold text-white hover:opacity-90"
+                            >
+                              Save
+                            </button>
+                            <button
+                              onClick={() => setEditingId(null)}
+                              className="text-muted-grey hover:text-navy-deeper dark:text-white/50 dark:hover:text-white"
+                            >
+                              Cancel
+                            </button>
+                            {edits[m.id] && (
+                              <button
+                                onClick={() => revertEdit(m.id)}
+                                className="text-muted-grey hover:text-navy-deeper dark:text-white/50 dark:hover:text-white"
+                              >
+                                Undo my changes
+                              </button>
+                            )}
+                            <span className="ml-auto hidden text-muted-grey sm:inline dark:text-white/40">
+                              Markdown — **bold**, ## heading, | table |
+                            </span>
+                          </div>
+                        </div>
+                      ) : m.role === "assistant" && m.text === "" && streaming ? (
                         <div>
                           <BouncingDots />
                           {slowResponse && (
@@ -709,10 +788,16 @@ export function ChatView({
                         </>
                       )}
                     </div>
-                    {m.role === "assistant" && m.text && !isStreamingThis && (
+                    {m.role === "assistant" && m.text && !isStreamingThis && !isEditing && (
                       <div className="mt-1.5 flex gap-3 pl-1 text-xs text-muted-grey dark:text-white/40">
                         <button onClick={() => handleCopy(shownText, m.id)} className="hover:text-navy-deeper dark:hover:text-white">
                           {copiedId === m.id ? "Copied" : "Copy"}
+                        </button>
+                        <button
+                          onClick={() => startEditing(m.id, shownText)}
+                          className="hover:text-navy-deeper dark:hover:text-white"
+                        >
+                          {edits[m.id] ? "Edited" : "Edit"}
                         </button>
                         <button onClick={() => handleSaveDraft(shownText)} className="hover:text-navy-deeper dark:hover:text-white">
                           Save Draft

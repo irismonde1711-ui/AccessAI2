@@ -263,14 +263,22 @@ export function printAsPdf(markdown: string) {
 
 export type ParsedTable = { header: string[]; rows: string[][] };
 
+// A cell's raw text still carries its markdown, so a bold heading would land
+// in the spreadsheet as literal asterisks. Word and PDF render those markers;
+// a cell has no formatting to render them into, so they are flattened away.
+function plainCell(cell: Tokens.TableCell): string {
+  const runs = inlineRuns(cell.tokens);
+  return runs.length ? runs.map((r) => r.text).join("") : cell.text;
+}
+
 export function extractTables(markdown: string): ParsedTable[] {
   const tables: ParsedTable[] = [];
   for (const token of marked.lexer(markdown)) {
     if (token.type !== "table") continue;
     const table = token as Tokens.Table;
     tables.push({
-      header: table.header.map((c) => c.text),
-      rows: table.rows.map((row) => row.map((c) => c.text)),
+      header: table.header.map(plainCell),
+      rows: table.rows.map((row) => row.map(plainCell)),
     });
   }
   return tables;
