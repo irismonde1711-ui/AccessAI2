@@ -197,3 +197,42 @@ export async function* streamAssistantReply(
   note(`stream ended with no text, last chunk: ${JSON.stringify(lastParsed)?.slice(0, 1000)}`);
   fail("Gemini returned an empty response");
 }
+
+// A one-shot call for the short, self-contained jobs that have nothing to
+// stream: the caller is waiting on the whole result anyway, so the SSE
+// machinery above would only add latency and failure modes.
+export async function generateText(
+  instruction: string,
+  input: string,
+  signal?: AbortSignal,
+): Promise<string> {
+  const apiKey = process.env.GOOGLE_GEMINI_API_KEY;
+  if (!apiKey) throw new Error("GOOGLE_GEMINI_API_KEY is not set on this environment");
+
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      signal,
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: instruction }] },
+        contents: [{ role: "user", parts: [{ text: input }] }],
+      }),
+    },
+  );
+
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "<unreadable body>");
+    throw new Error(`Gemini rejected the request with HTTP ${res.status}: ${detail.slice(0, 500)}`);
+  }
+
+  const parsed = await res.json();
+  const text: string = (parsed?.candidates?.[0]?.content?.parts ?? [])
+    .map((p: { text?: string }) => p.text ?? "")
+    .join("")
+    .trim();
+
+  if (!text) throw new Error("Gemini returned an empty response");
+  return text;
+}

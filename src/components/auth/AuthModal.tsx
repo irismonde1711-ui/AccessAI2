@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { isValidEmail, isValidPassword } from "@/lib/validation";
 import { GatewayModal as Modal } from "@/components/ui/GatewayModal";
 import { LogoMark } from "@/components/ui/Logo";
+import { trackSignUp } from "@/lib/analytics/ads";
 
 type Mode = "login" | "signup";
 
@@ -71,6 +72,9 @@ export function AuthModal({
         return;
       }
       if (data.session) {
+        // Signed in straight away, so this account never passes through the
+        // auth callback that normally reports the conversion.
+        trackSignUp();
         onSuccess(true);
       } else {
         setCheckEmail(true);

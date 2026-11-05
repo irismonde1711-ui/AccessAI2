@@ -10,6 +10,8 @@ import { PlusIcon, MicIcon, SendIcon, PinIcon, CloseIcon, MoreIcon } from "@/com
 import { createClient } from "@/lib/supabase/client";
 import { downloadAsWord, downloadTablesAsExcel, hasTable, printAsPdf } from "@/lib/export/documents";
 
+type Translation = { language: "fr" | "en"; label: string; text: string };
+
 type MessageFile = { filename: string; mimeType: string };
 
 type Message = {
@@ -124,6 +126,12 @@ export function ChatView({
   const [lengthMenuOpen, setLengthMenuOpen] = useState(false);
   const [exportMenuFor, setExportMenuFor] = useState<string | null>(null);
   const [exportingId, setExportingId] = useState<string | null>(null);
+  // Translations sit beside the original rather than replacing it: the answer
+  // was produced in one language for a reason, and people compare the two.
+  const [translations, setTranslations] = useState<Record<string, Translation>>({});
+  const [showOriginal, setShowOriginal] = useState<Record<string, boolean>>({});
+  const [translateMenuFor, setTranslateMenuFor] = useState<string | null>(null);
+  const [translatingId, setTranslatingId] = useState<string | null>(null);
   const [messagesRemaining, setMessagesRemaining] = useState<number | null>(null);
   const [documentsUnlockAt, setDocumentsUnlockAt] = useState<string | null>(null);
   const sessionIdRef = useRef<string | null>(initialSessionId);
@@ -163,6 +171,44 @@ export function ChatView({
       setError("That download didn't work. Please try again.");
     } finally {
       setExportingId(null);
+    }
+  }
+
+  async function handleTranslate(id: string, text: string, language: "fr" | "en", label: string) {
+    setTranslateMenuFor(null);
+    setError(null);
+
+    // Already translated into this language once: show it again rather than
+    // spending another message on the same work.
+    if (translations[id]?.language === language) {
+      setShowOriginal((current) => ({ ...current, [id]: false }));
+      return;
+    }
+
+    setTranslatingId(id);
+    try {
+      const res = await fetch("/api/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, target: language }),
+      });
+      const remainingHeader = res.headers.get("X-Messages-Remaining");
+      if (remainingHeader !== null) setMessagesRemaining(remainingHeader ? Number(remainingHeader) : null);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(
+          data.error === "limit_reached"
+            ? "You have used this period's messages. A translation counts as one."
+            : (data.error ?? "The translation did not come through."),
+        );
+        return;
+      }
+      setTranslations((current) => ({ ...current, [id]: { language, label, text: data.text } }));
+      setShowOriginal((current) => ({ ...current, [id]: false }));
+    } catch {
+      setError("The translation did not come through.");
+    } finally {
+      setTranslatingId(null);
     }
   }
 
@@ -601,6 +647,10 @@ export function ChatView({
         <div className="mx-auto flex max-w-2xl flex-col gap-6">
             {messages.map((m) => {
               const isStreamingThis = streaming && m.role === "assistant" && m === messages[messages.length - 1];
+              // Everything downstream — what is shown, copied, emailed and
+              // exported — follows the version currently on screen.
+              const translation = showOriginal[m.id] ? undefined : translations[m.id];
+              const shownText = translation ? translation.text : m.text;
               return (
                 <div
                   key={m.id}
@@ -640,7 +690,7 @@ export function ChatView({
                           )}
                         </div>
                       ) : m.role === "assistant" ? (
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.text}</ReactMarkdown>
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{shownText}</ReactMarkdown>
                       ) : (
                         <>
                           {m.files && m.files.length > 0 && (
@@ -661,10 +711,10 @@ export function ChatView({
                     </div>
                     {m.role === "assistant" && m.text && !isStreamingThis && (
                       <div className="mt-1.5 flex gap-3 pl-1 text-xs text-muted-grey dark:text-white/40">
-                        <button onClick={() => handleCopy(m.text, m.id)} className="hover:text-navy-deeper dark:hover:text-white">
+                        <button onClick={() => handleCopy(shownText, m.id)} className="hover:text-navy-deeper dark:hover:text-white">
                           {copiedId === m.id ? "Copied" : "Copy"}
                         </button>
-                        <button onClick={() => handleSaveDraft(m.text)} className="hover:text-navy-deeper dark:hover:text-white">
+                        <button onClick={() => handleSaveDraft(shownText)} className="hover:text-navy-deeper dark:hover:text-white">
                           Save Draft
                         </button>
                         {onTogglePin && (
@@ -677,7 +727,7 @@ export function ChatView({
                           </button>
                         )}
                         {onEmailResponse && (
-                          <button onClick={() => onEmailResponse(m.text)} className="hover:text-navy-deeper dark:hover:text-white">
+                          <button onClick={() => onEmailResponse(shownText)} className="hover:text-navy-deeper dark:hover:text-white">
                             Send / Review
                           </button>
                         )}
@@ -697,27 +747,75 @@ export function ChatView({
                                 className="fixed inset-0 z-10 cursor-default"
                                 onClick={() => setExportMenuFor(null)}
                               />
-                              <div className="absolute bottom-6 left-0 z-20 w-44 overflow-hidden rounded-xl border border-black/10 bg-white py-1 shadow-xl dark:border-white/10 dark:bg-navy-dark">
+                              <div className="absolute top-6 left-0 z-20 w-44 overflow-hidden rounded-xl border border-black/10 bg-white py-1 shadow-xl dark:border-white/10 dark:bg-navy-deeper">
                                 <button
-                                  onClick={() => handleExport(m.id, m.text, "word")}
+                                  onClick={() => handleExport(m.id, shownText, "word")}
                                   className="block w-full px-3 py-2 text-left text-[13px] text-navy-deeper hover:bg-black/5 dark:text-white dark:hover:bg-white/10"
                                 >
                                   Word document
                                 </button>
                                 <button
-                                  onClick={() => handleExport(m.id, m.text, "pdf")}
+                                  onClick={() => handleExport(m.id, shownText, "pdf")}
                                   className="block w-full px-3 py-2 text-left text-[13px] text-navy-deeper hover:bg-black/5 dark:text-white dark:hover:bg-white/10"
                                 >
                                   PDF
                                 </button>
-                                {hasTable(m.text) && (
+                                {hasTable(shownText) && (
                                   <button
-                                    onClick={() => handleExport(m.id, m.text, "excel")}
+                                    onClick={() => handleExport(m.id, shownText, "excel")}
                                     className="block w-full px-3 py-2 text-left text-[13px] text-navy-deeper hover:bg-black/5 dark:text-white dark:hover:bg-white/10"
                                   >
                                     Excel spreadsheet
                                   </button>
                                 )}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                        <div className="relative">
+                          <button
+                            onClick={() => setTranslateMenuFor(translateMenuFor === m.id ? null : m.id)}
+                            aria-expanded={translateMenuFor === m.id}
+                            className="hover:text-navy-deeper dark:hover:text-white"
+                          >
+                            {translatingId === m.id
+                              ? "Translating…"
+                              : translation
+                                ? translation.label
+                                : "Translate"}
+                          </button>
+                          {translateMenuFor === m.id && (
+                            <>
+                              <button
+                                type="button"
+                                aria-label="Close translate menu"
+                                className="fixed inset-0 z-10 cursor-default"
+                                onClick={() => setTranslateMenuFor(null)}
+                              />
+                              <div className="absolute top-6 left-0 z-20 w-44 overflow-hidden rounded-xl border border-black/10 bg-white py-1 shadow-xl dark:border-white/10 dark:bg-navy-deeper">
+                                {translation && (
+                                  <button
+                                    onClick={() => {
+                                      setTranslateMenuFor(null);
+                                      setShowOriginal((current) => ({ ...current, [m.id]: true }));
+                                    }}
+                                    className="block w-full px-3 py-2 text-left text-[13px] text-navy-deeper hover:bg-black/5 dark:text-white dark:hover:bg-white/10"
+                                  >
+                                    Show the original
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => handleTranslate(m.id, m.text, "fr", "French")}
+                                  className="block w-full px-3 py-2 text-left text-[13px] text-navy-deeper hover:bg-black/5 dark:text-white dark:hover:bg-white/10"
+                                >
+                                  French
+                                </button>
+                                <button
+                                  onClick={() => handleTranslate(m.id, m.text, "en", "English")}
+                                  className="block w-full px-3 py-2 text-left text-[13px] text-navy-deeper hover:bg-black/5 dark:text-white dark:hover:bg-white/10"
+                                >
+                                  English
+                                </button>
                               </div>
                             </>
                           )}

@@ -2,6 +2,8 @@
 
 import Script from "next/script";
 import { useCallback, useRef, useState } from "react";
+import { trackPurchase } from "@/lib/analytics/ads";
+import { PLAN_PRICE } from "@/lib/data/subscription";
 
 type PayPalButtons = (opts: {
   style?: Record<string, string | number>;
@@ -58,6 +60,9 @@ export function PayPalSubscribeButton({
               });
               const data = await res.json().catch(() => ({}));
               if (!res.ok) throw new Error(data.error ?? "The payment did not complete.");
+              // Reported here rather than on the confirmation screen: this is
+              // the one point that runs exactly once per captured payment.
+              trackPurchase(orderID, Number(PLAN_PRICE));
               onSuccess(data.expiresAt as string);
             } catch (err) {
               setError(

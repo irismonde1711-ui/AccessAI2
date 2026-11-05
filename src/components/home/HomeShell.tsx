@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { AuthModal } from "@/components/auth/AuthModal";
@@ -19,6 +19,7 @@ import { SubscribePromptModal } from "@/components/modals/SubscribePromptModal";
 import { SubscriptionSuccessModal } from "@/components/modals/SubscriptionSuccessModal";
 import { MenuIcon } from "@/components/ui/Icons";
 import { useIsMobile } from "@/lib/useIsMobile";
+import { trackSignUp } from "@/lib/analytics/ads";
 import type { SidebarData } from "@/lib/data/sidebar";
 
 type ModalState =
@@ -143,6 +144,15 @@ export function HomeShell({
     clearConversationState();
     router.refresh();
   }
+
+  // A confirmed account reaching the app for the first time is the sign-up
+  // the ad campaigns are paying for, so this is where it gets reported. The
+  // flag is read from the URL the auth callback set, which covers Google
+  // sign-in as well as email.
+  const isWelcome = searchParams.get("welcome") === "1";
+  useEffect(() => {
+    if (isWelcome) trackSignUp();
+  }, [isWelcome]);
 
   function handleAuthSuccess(justSignedUp: boolean) {
     setModal(justSignedUp ? "subscribe" : null);
