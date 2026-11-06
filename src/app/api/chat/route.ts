@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   DOCUMENT_CONVERSION_PROMPT,
+  DOCUMENT_FILL_PROMPT,
   SYSTEM_PROMPT,
   streamAssistantReply,
   type ChatTurn,
@@ -49,7 +50,7 @@ export async function POST(request: NextRequest) {
     messages: ChatTurn[];
     attachments?: StoredAttachment[];
     responseLength?: ResponseLength;
-    mode?: "chat" | "convert";
+    mode?: "chat" | "convert" | "fill";
   };
 
   if (!Array.isArray(messages) || messages.length === 0) {
@@ -207,14 +208,25 @@ export async function POST(request: NextRequest) {
         // body is client-supplied, so the entitlement is decided here.
         const effectiveLength: ResponseLength =
           responseLength === "detailed" && !isPaidUser ? "auto" : responseLength;
-        // Transcribing a document is the one request where a length steer is
-        // wrong: "brief" would quietly drop half of someone's own document.
+        // Transcribing a document, or filling one in, is the one request
+        // where a length steer is wrong: "brief" would quietly drop half of
+        // someone's own document.
+        //
+        // A fill keeps its instruction on the turn that has no file attached
+        // too — that second turn is where the document actually gets written,
+        // from the copy the first turn wrote out.
         const converting = mode === "convert" && files.length > 0;
+        const filling = mode === "fill";
+        const documentWork = converting || filling;
         for await (const chunk of streamAssistantReply(
           turns,
           upstreamController.signal,
-          converting ? "auto" : effectiveLength,
-          converting ? DOCUMENT_CONVERSION_PROMPT : SYSTEM_PROMPT,
+          documentWork ? "auto" : effectiveLength,
+          filling
+            ? DOCUMENT_FILL_PROMPT
+            : converting
+              ? DOCUMENT_CONVERSION_PROMPT
+              : SYSTEM_PROMPT,
         )) {
           assistantText += chunk;
           controller.enqueue(encoder.encode(chunk));

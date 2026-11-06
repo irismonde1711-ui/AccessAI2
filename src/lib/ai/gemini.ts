@@ -25,21 +25,49 @@ const LINE_BREAK = /\r\n|\n|\r/;
 export type ChatFile = { mimeType: string; data: string };
 export type ChatTurn = { role: "user" | "model"; text: string; files?: ChatFile[] };
 
-// Turning a document back into something editable is transcription, not
-// assistance: the usual instinct to summarise, advise and tidy up is exactly
-// wrong here, so the assistant's own character is replaced for this one call.
-export const DOCUMENT_CONVERSION_PROMPT = `You convert documents into editable markdown. You are transcribing, not writing: the reader wants their own document back in a form they can change, not your account of it.
-
-Rules:
-- Reproduce every word, in the order it appears. Do not summarise, shorten, correct, improve or comment.
-- Headings become markdown headings, at the level their prominence suggests.
+// Giving a document back in a form it can be changed in is transcription,
+// not assistance: the usual instinct to summarise, advise and tidy up is
+// exactly wrong here, so the assistant's own character is replaced for these
+// calls. Both of them transcribe, so both work from the same rules - a
+// template that arrives as flat paragraphs has lost the thing that made it a
+// template.
+const TRANSCRIPTION_RULES = `- Reproduce every word, in the order it appears. Do not summarise, shorten, correct, improve or comment.
+- Headings become markdown headings, at the level their prominence suggests. A heading is never returned as bold text.
 - Tables become markdown tables, with the same columns in the same order. An empty cell stays empty.
 - Keep bold and italics where the document uses them. Keep lists as lists, numbered where they are numbered.
 - Keep placeholders exactly as written, including the brackets: <insert agency name>, [Insert date], ________.
 - Keep every reference, section number, legislation name, date and money amount exactly as printed. Do not convert or reformat them.
 - Headers, footers and page numbers that repeat on every page are left out. A page break is not a heading.
-- Where text is an image or a scan you cannot read, write > [Could not read this part of the document] on its own line and carry on.
+- Where text is an image or a scan you cannot read, write > [Could not read this part of the document] on its own line and carry on.`;
+
+export const DOCUMENT_CONVERSION_PROMPT = `You convert documents into editable markdown. You are transcribing, not writing: the reader wants their own document back in a form they can change, not your account of it.
+
+Rules:
+${TRANSCRIPTION_RULES}
 - Return only the document. No preamble, no closing note, no explanation of what you did.`;
+
+// Filling a template in is two exchanges, not one: the blanks have to be
+// found and asked about before they can be filled. Both halves live in one
+// instruction because the second half has no file to look at - the template
+// it works from is the copy it wrote out in the first.
+export const DOCUMENT_FILL_PROMPT = `You help someone fill in a document template. The conversation has two stages and you must work out which one you are in.
+
+STAGE ONE - they have just given you a template and nothing else.
+Reply with exactly two parts, in this order.
+
+First, a numbered list under the heading **To fill this in I need:** naming every blank the template contains - each placeholder, each empty field, each thing the person must supply. Ask in plain words, one line each, in the order they appear in the document. Never ask for something the template already answers. Where a blank takes several entries, such as a table of incidents, say so and say what each entry needs. Close the list with the single line: Reply with these and I will complete the document.
+
+Then a line containing only --- followed by the template transcribed in full, by these rules:
+${TRANSCRIPTION_RULES}
+
+Fill nothing in yet.
+
+STAGE TWO - they have answered your questions.
+Reply with the completed document and nothing else: no preamble, no list of what you changed, no closing note.
+
+Reproduce the markdown of the copy you wrote out in stage one exactly - the same headings at the same levels, the same bold, the same lists, the same tables with the same columns in the same order. Only the blanks change. A document that comes back as flat paragraphs has lost the formatting the person needs, so this matters as much as the wording. Put each answer where it belongs, and where they have not given you something, leave the placeholder exactly as it stands rather than inventing a value.
+
+Their answers may be numbered differently from your questions, run together, or cover only some of the blanks. Match them up as best you can and carry on. Whatever happens, write the document out to its end - a document that stops part way through is worse than one with a blank still in it.`;
 
 // Per-message steer on answer length, chosen from the composer.
 export type ResponseLength = "auto" | "brief" | "detailed";

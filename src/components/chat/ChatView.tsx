@@ -39,6 +39,7 @@ const MAX_FILE_BYTES = 10 * 1024 * 1024;
 // What the conversation shows when someone asks for a document back in an
 // editable form, so the transcript reads as a request they made.
 const CONVERT_REQUEST = "Give me this document back as an editable draft.";
+const FILL_REQUEST = "Help me fill this template in.";
 
 type ResponseLength = "auto" | "brief" | "detailed";
 
@@ -142,6 +143,10 @@ export function ChatView({
   const [showOriginal, setShowOriginal] = useState<Record<string, boolean>>({});
   const [translateMenuFor, setTranslateMenuFor] = useState<string | null>(null);
   const [translatingId, setTranslatingId] = useState<string | null>(null);
+  // Filling a template in takes two exchanges — the questions, then the
+  // answers — and the second one carries no file, so the instruction has to
+  // survive one more turn and then stop.
+  const [awaitingFillAnswers, setAwaitingFillAnswers] = useState(false);
   const [messagesRemaining, setMessagesRemaining] = useState<number | null>(null);
   const [documentsUnlockAt, setDocumentsUnlockAt] = useState<string | null>(null);
   const sessionIdRef = useRef<string | null>(initialSessionId);
@@ -258,11 +263,26 @@ export function ChatView({
     }
   }
 
-  async function handleSend(e: React.SyntheticEvent, convert = false) {
+  async function handleSend(e: React.SyntheticEvent, documentAction?: "convert" | "fill") {
     e.preventDefault();
-    const text = convert ? CONVERT_REQUEST : input.trim();
+    const convert = documentAction !== undefined;
+    const text = convert
+      ? documentAction === "fill"
+        ? FILL_REQUEST
+        : CONVERT_REQUEST
+      : input.trim();
     if (!text || streaming) return;
     if (convert && attachments.length === 0) return;
+
+    const mode =
+      documentAction === "fill" || (!convert && awaitingFillAnswers)
+        ? "fill"
+        : documentAction === "convert"
+          ? "convert"
+          : "chat";
+    // The questions have been asked, so the next message is the answers; after
+    // that the conversation goes back to being an ordinary one.
+    setAwaitingFillAnswers(documentAction === "fill");
 
     const pendingFiles = attachments;
     setError(null);
@@ -312,7 +332,7 @@ export function ChatView({
           projectId: sessionIdRef.current ? undefined : projectId,
           attachments: uploaded,
           responseLength,
-          mode: convert ? "convert" : "chat",
+          mode,
           messages: nextMessages.map((m) => ({
             role: m.role === "assistant" ? "model" : "user",
             text: m.text,
@@ -501,12 +521,23 @@ export function ChatView({
           {attachments.some((a) => !a.file.type.startsWith("image/")) && (
             <button
               type="button"
-              onClick={(e) => handleSend(e, true)}
+              onClick={(e) => handleSend(e, "convert")}
               disabled={streaming}
               title="Read the document and hand it back as a draft you can edit, then download as Word or PDF"
               className="flex items-center gap-1.5 rounded-full border border-teal/40 bg-teal/10 px-3 py-1 text-xs font-medium text-teal transition hover:bg-teal/20 disabled:opacity-50"
             >
               Make it editable
+            </button>
+          )}
+          {attachments.some((a) => !a.file.type.startsWith("image/")) && (
+            <button
+              type="button"
+              onClick={(e) => handleSend(e, "fill")}
+              disabled={streaming}
+              title="Work out every blank in the template and ask you for them, then complete the document"
+              className="flex items-center gap-1.5 rounded-full border border-teal/40 bg-teal/10 px-3 py-1 text-xs font-medium text-teal transition hover:bg-teal/20 disabled:opacity-50"
+            >
+              Fill this in
             </button>
           )}
         </div>
