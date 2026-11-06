@@ -2,6 +2,8 @@
 
 import { marked, type Tokens } from "marked";
 
+import { normaliseMarkdown } from "@/lib/markdown";
+
 // Taking an answer out of the chat window and into the places this work
 // actually lives: a Word file to send to a board, a PDF to attach, a
 // spreadsheet to keep working in.
@@ -74,6 +76,7 @@ function inlineRuns(tokens: Tokens.Generic[] | undefined, inherited: Inline = { 
 }
 
 export async function downloadAsWord(markdown: string) {
+  markdown = normaliseMarkdown(markdown);
   const { Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, WidthType } =
     await import("docx");
 
@@ -204,6 +207,7 @@ export async function downloadAsWord(markdown: string) {
 // Separated from printAsPdf so the document itself can be inspected without
 // opening a print dialog.
 export function buildPrintableHtml(markdown: string): string {
+  markdown = normaliseMarkdown(markdown);
   const html = marked.parse(markdown, { async: false, gfm: true, breaks: true });
   return `<!doctype html>
 <html><head><meta charset="utf-8"><title>${safeFilename(markdown)}</title>
@@ -227,6 +231,7 @@ export function buildPrintableHtml(markdown: string): string {
 }
 
 export function printAsPdf(markdown: string) {
+  markdown = normaliseMarkdown(markdown);
   const frame = document.createElement("iframe");
   frame.setAttribute("aria-hidden", "true");
   frame.style.position = "fixed";
@@ -272,6 +277,7 @@ function plainCell(cell: Tokens.TableCell): string {
 }
 
 export function extractTables(markdown: string): ParsedTable[] {
+  markdown = normaliseMarkdown(markdown);
   const tables: ParsedTable[] = [];
   for (const token of marked.lexer(markdown)) {
     if (token.type !== "table") continue;
@@ -285,6 +291,7 @@ export function extractTables(markdown: string): ParsedTable[] {
 }
 
 export function hasTable(markdown: string): boolean {
+  markdown = normaliseMarkdown(markdown);
   return extractTables(markdown).length > 0;
 }
 
@@ -299,6 +306,7 @@ function cellValue(raw: string): string | number {
 }
 
 export async function downloadTablesAsExcel(markdown: string) {
+  markdown = normaliseMarkdown(markdown);
   const tables = extractTables(markdown);
   if (tables.length === 0) return false;
 

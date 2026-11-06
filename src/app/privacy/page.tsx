@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { LegalPage, Section, Bullets } from "@/components/legal/LegalPage";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy — AccessAI2",
+  // The root layout appends " — AccessAI2" (see its title template), so
+  // naming it here too produced "Privacy Policy — AccessAI2 — AccessAI2".
+  title: "Privacy Policy",
   description: "How AccessAI2 collects, uses, stores and discloses personal information.",
 };
 

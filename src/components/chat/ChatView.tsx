@@ -7,6 +7,8 @@ import { LogoMark } from "@/components/ui/Logo";
 import { useVoiceInput } from "@/lib/useVoiceInput";
 import { useIsMobile } from "@/lib/useIsMobile";
 import { PlusIcon, MicIcon, SendIcon, PinIcon, CloseIcon, MoreIcon } from "@/components/ui/Icons";
+import { ActionMenu } from "@/components/ui/ActionMenu";
+import { normaliseMarkdown } from "@/lib/markdown";
 import { createClient } from "@/lib/supabase/client";
 import { downloadAsWord, downloadTablesAsExcel, hasTable, printAsPdf } from "@/lib/export/documents";
 
@@ -819,7 +821,7 @@ export function ChatView({
                           )}
                         </div>
                       ) : m.role === "assistant" ? (
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{shownText}</ReactMarkdown>
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{normaliseMarkdown(shownText)}</ReactMarkdown>
                       ) : (
                         <>
                           {m.files && m.files.length > 0 && (
@@ -866,95 +868,67 @@ export function ChatView({
                             Send / Review
                           </button>
                         )}
-                        <div className="relative">
+                        <ActionMenu
+                          open={exportMenuFor === m.id}
+                          onToggle={() => setExportMenuFor(exportMenuFor === m.id ? null : m.id)}
+                          onClose={() => setExportMenuFor(null)}
+                          closeLabel="Close download menu"
+                          label={exportingId === m.id ? "Preparing…" : "Download"}
+                        >
                           <button
-                            onClick={() => setExportMenuFor(exportMenuFor === m.id ? null : m.id)}
-                            aria-expanded={exportMenuFor === m.id}
-                            className="hover:text-navy-deeper dark:hover:text-white"
+                            onClick={() => handleExport(m.id, shownText, "word")}
+                            className="block w-full px-3 py-2 text-left text-[13px] text-navy-deeper hover:bg-black/5 dark:text-white dark:hover:bg-white/10"
                           >
-                            {exportingId === m.id ? "Preparing…" : "Download"}
+                            Word document
                           </button>
-                          {exportMenuFor === m.id && (
-                            <>
-                              <button
-                                type="button"
-                                aria-label="Close download menu"
-                                className="fixed inset-0 z-10 cursor-default"
-                                onClick={() => setExportMenuFor(null)}
-                              />
-                              <div className="absolute top-6 left-0 z-20 w-44 overflow-hidden rounded-xl border border-black/10 bg-white py-1 shadow-xl dark:border-white/10 dark:bg-navy-deeper">
-                                <button
-                                  onClick={() => handleExport(m.id, shownText, "word")}
-                                  className="block w-full px-3 py-2 text-left text-[13px] text-navy-deeper hover:bg-black/5 dark:text-white dark:hover:bg-white/10"
-                                >
-                                  Word document
-                                </button>
-                                <button
-                                  onClick={() => handleExport(m.id, shownText, "pdf")}
-                                  className="block w-full px-3 py-2 text-left text-[13px] text-navy-deeper hover:bg-black/5 dark:text-white dark:hover:bg-white/10"
-                                >
-                                  PDF
-                                </button>
-                                {hasTable(shownText) && (
-                                  <button
-                                    onClick={() => handleExport(m.id, shownText, "excel")}
-                                    className="block w-full px-3 py-2 text-left text-[13px] text-navy-deeper hover:bg-black/5 dark:text-white dark:hover:bg-white/10"
-                                  >
-                                    Excel spreadsheet
-                                  </button>
-                                )}
-                              </div>
-                            </>
-                          )}
-                        </div>
-                        <div className="relative">
                           <button
-                            onClick={() => setTranslateMenuFor(translateMenuFor === m.id ? null : m.id)}
-                            aria-expanded={translateMenuFor === m.id}
-                            className="hover:text-navy-deeper dark:hover:text-white"
+                            onClick={() => handleExport(m.id, shownText, "pdf")}
+                            className="block w-full px-3 py-2 text-left text-[13px] text-navy-deeper hover:bg-black/5 dark:text-white dark:hover:bg-white/10"
                           >
-                            {translatingId === m.id
-                              ? "Translating…"
-                              : translation
-                                ? translation.label
-                                : "Translate"}
+                            PDF
                           </button>
-                          {translateMenuFor === m.id && (
-                            <>
-                              <button
-                                type="button"
-                                aria-label="Close translate menu"
-                                className="fixed inset-0 z-10 cursor-default"
-                                onClick={() => setTranslateMenuFor(null)}
-                              />
-                              <div className="absolute top-6 left-0 z-20 w-44 overflow-hidden rounded-xl border border-black/10 bg-white py-1 shadow-xl dark:border-white/10 dark:bg-navy-deeper">
-                                {translation && (
-                                  <button
-                                    onClick={() => {
-                                      setTranslateMenuFor(null);
-                                      setShowOriginal((current) => ({ ...current, [m.id]: true }));
-                                    }}
-                                    className="block w-full px-3 py-2 text-left text-[13px] text-navy-deeper hover:bg-black/5 dark:text-white dark:hover:bg-white/10"
-                                  >
-                                    Show the original
-                                  </button>
-                                )}
-                                <button
-                                  onClick={() => handleTranslate(m.id, shownText, "fr", "French")}
-                                  className="block w-full px-3 py-2 text-left text-[13px] text-navy-deeper hover:bg-black/5 dark:text-white dark:hover:bg-white/10"
-                                >
-                                  French
-                                </button>
-                                <button
-                                  onClick={() => handleTranslate(m.id, shownText, "en", "English")}
-                                  className="block w-full px-3 py-2 text-left text-[13px] text-navy-deeper hover:bg-black/5 dark:text-white dark:hover:bg-white/10"
-                                >
-                                  English
-                                </button>
-                              </div>
-                            </>
+                          {hasTable(shownText) && (
+                            <button
+                              onClick={() => handleExport(m.id, shownText, "excel")}
+                              className="block w-full px-3 py-2 text-left text-[13px] text-navy-deeper hover:bg-black/5 dark:text-white dark:hover:bg-white/10"
+                            >
+                              Excel spreadsheet
+                            </button>
                           )}
-                        </div>
+                        </ActionMenu>
+                        <ActionMenu
+                          open={translateMenuFor === m.id}
+                          onToggle={() => setTranslateMenuFor(translateMenuFor === m.id ? null : m.id)}
+                          onClose={() => setTranslateMenuFor(null)}
+                          closeLabel="Close translate menu"
+                          label={
+                            translatingId === m.id ? "Translating…" : translation ? translation.label : "Translate"
+                          }
+                        >
+                          {translation && (
+                            <button
+                              onClick={() => {
+                                setTranslateMenuFor(null);
+                                setShowOriginal((current) => ({ ...current, [m.id]: true }));
+                              }}
+                              className="block w-full px-3 py-2 text-left text-[13px] text-navy-deeper hover:bg-black/5 dark:text-white dark:hover:bg-white/10"
+                            >
+                              Show the original
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleTranslate(m.id, shownText, "fr", "French")}
+                            className="block w-full px-3 py-2 text-left text-[13px] text-navy-deeper hover:bg-black/5 dark:text-white dark:hover:bg-white/10"
+                          >
+                            French
+                          </button>
+                          <button
+                            onClick={() => handleTranslate(m.id, shownText, "en", "English")}
+                            className="block w-full px-3 py-2 text-left text-[13px] text-navy-deeper hover:bg-black/5 dark:text-white dark:hover:bg-white/10"
+                          >
+                            English
+                          </button>
+                        </ActionMenu>
                       </div>
                     )}
                   </div>

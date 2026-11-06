@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { LegalPage, Section, Bullets } from "@/components/legal/LegalPage";
 
 export const metadata: Metadata = {
-  title: "Terms of Service — AccessAI2",
+  // See the note in privacy/page.tsx: the layout adds the suffix.
+  title: "Terms of Service",
   description: "The terms governing your use of the AccessAI2 assistant.",
 };
 

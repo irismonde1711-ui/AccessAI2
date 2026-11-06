@@ -4,15 +4,36 @@
     {
       "name": "design-preview",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["--yes", "serve", "C:\\Users\\abc\\Downloads", "-l", "4173"],
+      "runtimeArgs": [
+        "--yes",
+        "serve",
+        "C:\\Users\\abc\\Downloads",
+        "-l",
+        "4173"
+      ],
       "port": 4173
     },
     {
       "name": "dev",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
       "port": 3000,
       "autoPort": true
+    },
+    {
+      "name": "dev20",
+      "runtimeExecutable": "C:/Users/abc/AppData/Local/nvm/v20.20.2/node.exe",
+      "runtimeArgs": [
+        "--dns-result-order=ipv4first",
+        "./node_modules/next/dist/bin/next",
+        "dev",
+        "--port",
+        "3200"
+      ],
+      "port": 3200
     }
   ]
 }
