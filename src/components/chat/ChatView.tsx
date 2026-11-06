@@ -36,6 +36,10 @@ const ALLOWED_TYPES = [
 ];
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 
+// What the conversation shows when someone asks for a document back in an
+// editable form, so the transcript reads as a request they made.
+const CONVERT_REQUEST = "Give me this document back as an editable draft.";
+
 type ResponseLength = "auto" | "brief" | "detailed";
 
 const LENGTH_LABEL: Record<ResponseLength, string> = {
@@ -254,14 +258,17 @@ export function ChatView({
     }
   }
 
-  async function handleSend(e: React.SyntheticEvent) {
+  async function handleSend(e: React.SyntheticEvent, convert = false) {
     e.preventDefault();
-    const text = input.trim();
+    const text = convert ? CONVERT_REQUEST : input.trim();
     if (!text || streaming) return;
+    if (convert && attachments.length === 0) return;
 
     const pendingFiles = attachments;
     setError(null);
-    setInput("");
+    // A conversion carries its own sentence, so anything half-typed in the
+    // box is left where it was rather than thrown away.
+    if (!convert) setInput("");
     setAttachments([]);
     setSlowResponse(false);
     const userMessage: Message = {
@@ -305,6 +312,7 @@ export function ChatView({
           projectId: sessionIdRef.current ? undefined : projectId,
           attachments: uploaded,
           responseLength,
+          mode: convert ? "convert" : "chat",
           messages: nextMessages.map((m) => ({
             role: m.role === "assistant" ? "model" : "user",
             text: m.text,
@@ -318,7 +326,7 @@ export function ChatView({
         // A document-only limit stays an inline warning: plain text messages
         // are still allowed, so the chat must not be locked out (spec §6.4).
         if (data.error === "document_limit_reached") {
-          setInput(userMessage.text);
+          if (!convert) setInput(userMessage.text);
           setAttachments(pendingFiles);
           setAttachError("You've used all your document uploads for this window.");
         } else {
@@ -490,6 +498,17 @@ export function ChatView({
               </button>
             </span>
           ))}
+          {attachments.some((a) => !a.file.type.startsWith("image/")) && (
+            <button
+              type="button"
+              onClick={(e) => handleSend(e, true)}
+              disabled={streaming}
+              title="Read the document and hand it back as a draft you can edit, then download as Word or PDF"
+              className="flex items-center gap-1.5 rounded-full border border-teal/40 bg-teal/10 px-3 py-1 text-xs font-medium text-teal transition hover:bg-teal/20 disabled:opacity-50"
+            >
+              Make it editable
+            </button>
+          )}
         </div>
       )}
       {attachError && <p className="mb-2 text-xs text-red-500">{attachError}</p>}

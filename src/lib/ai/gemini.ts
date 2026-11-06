@@ -25,6 +25,22 @@ const LINE_BREAK = /\r\n|\n|\r/;
 export type ChatFile = { mimeType: string; data: string };
 export type ChatTurn = { role: "user" | "model"; text: string; files?: ChatFile[] };
 
+// Turning a document back into something editable is transcription, not
+// assistance: the usual instinct to summarise, advise and tidy up is exactly
+// wrong here, so the assistant's own character is replaced for this one call.
+export const DOCUMENT_CONVERSION_PROMPT = `You convert documents into editable markdown. You are transcribing, not writing: the reader wants their own document back in a form they can change, not your account of it.
+
+Rules:
+- Reproduce every word, in the order it appears. Do not summarise, shorten, correct, improve or comment.
+- Headings become markdown headings, at the level their prominence suggests.
+- Tables become markdown tables, with the same columns in the same order. An empty cell stays empty.
+- Keep bold and italics where the document uses them. Keep lists as lists, numbered where they are numbered.
+- Keep placeholders exactly as written, including the brackets: <insert agency name>, [Insert date], ________.
+- Keep every reference, section number, legislation name, date and money amount exactly as printed. Do not convert or reformat them.
+- Headers, footers and page numbers that repeat on every page are left out. A page break is not a heading.
+- Where text is an image or a scan you cannot read, write > [Could not read this part of the document] on its own line and carry on.
+- Return only the document. No preamble, no closing note, no explanation of what you did.`;
+
 // Per-message steer on answer length, chosen from the composer.
 export type ResponseLength = "auto" | "brief" | "detailed";
 
@@ -39,6 +55,7 @@ export async function* streamAssistantReply(
   turns: ChatTurn[],
   signal: AbortSignal,
   responseLength: ResponseLength = "auto",
+  systemPrompt: string = SYSTEM_PROMPT,
 ): AsyncGenerator<string> {
   const apiKey = process.env.GOOGLE_GEMINI_API_KEY;
 
@@ -63,8 +80,8 @@ export async function* streamAssistantReply(
 
   const systemText =
     responseLength === "auto"
-      ? SYSTEM_PROMPT
-      : `${SYSTEM_PROMPT}\n\n${LENGTH_INSTRUCTION[responseLength]}`;
+      ? systemPrompt
+      : `${systemPrompt}\n\n${LENGTH_INSTRUCTION[responseLength]}`;
 
   // Thinking tokens bill as output and dominate the cost of short answers: an
   // identical trivial prompt measured 64 tokens by default against 4 at

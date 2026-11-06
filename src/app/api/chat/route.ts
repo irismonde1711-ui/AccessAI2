@@ -1,7 +1,13 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { streamAssistantReply, type ChatTurn, type ResponseLength } from "@/lib/ai/gemini";
+import {
+  DOCUMENT_CONVERSION_PROMPT,
+  SYSTEM_PROMPT,
+  streamAssistantReply,
+  type ChatTurn,
+  type ResponseLength,
+} from "@/lib/ai/gemini";
 import { hasActiveSubscription } from "@/lib/data/subscription";
 
 // Vercel defaults serverless functions to 10s; a thinking model streaming a
@@ -35,6 +41,7 @@ export async function POST(request: NextRequest) {
     messages,
     attachments = [],
     responseLength = "auto",
+    mode = "chat",
   } = body as {
     sessionId: string | null;
     isTemporary: boolean;
@@ -42,6 +49,7 @@ export async function POST(request: NextRequest) {
     messages: ChatTurn[];
     attachments?: StoredAttachment[];
     responseLength?: ResponseLength;
+    mode?: "chat" | "convert";
   };
 
   if (!Array.isArray(messages) || messages.length === 0) {
@@ -199,10 +207,14 @@ export async function POST(request: NextRequest) {
         // body is client-supplied, so the entitlement is decided here.
         const effectiveLength: ResponseLength =
           responseLength === "detailed" && !isPaidUser ? "auto" : responseLength;
+        // Transcribing a document is the one request where a length steer is
+        // wrong: "brief" would quietly drop half of someone's own document.
+        const converting = mode === "convert" && files.length > 0;
         for await (const chunk of streamAssistantReply(
           turns,
           upstreamController.signal,
-          effectiveLength,
+          converting ? "auto" : effectiveLength,
+          converting ? DOCUMENT_CONVERSION_PROMPT : SYSTEM_PROMPT,
         )) {
           assistantText += chunk;
           controller.enqueue(encoder.encode(chunk));
